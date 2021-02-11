@@ -7,6 +7,13 @@ const Reducer = (state, action) => {
          ...state,
          auth: action.payload,
        };
+     case actions.LOGOUT:
+       return {
+         ...state,
+         auth: action.payload,
+         meals: action.payload,
+         selectedDay: {displayDay: false, day: ''},
+       }
      case actions.ADD_RECIPE:
        return {
          ...state,

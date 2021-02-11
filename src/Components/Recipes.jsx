@@ -1,30 +1,7 @@
 import React, { useContext, useState } from 'react';
+import { useHistory } from 'react-router-dom';
 import { Context } from './State/Provider/Store';
 
-const weekday = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday"
-];
-
-const month = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December"
-];
 
 const styles = {
   container: {
@@ -64,12 +41,16 @@ const Recipe = () => {
   };
 
   const ingredients = [];
-  const generalInfo = {title: 'none', cookingMethod: 'oven'};
+  const generalInfo = {title: 'none', cookingMethod: 'none', id: 0};
   const [ingredient, setIngredient] = useState(ingredientInitialState);
   const [state, dispatch] = useContext(Context);
+  let history = useHistory();
 
   const createRecipe = (event) => {
     console.log('New ingredient');
+    if (state.recipes.length > 0) {
+      generalInfo.id = state.recipes[state.recipes.length - 1].generalInformation.id + 1;
+    }
     const recipe = [];
     recipe.push({
       generalInformation: {
@@ -82,7 +63,12 @@ const Recipe = () => {
     );
 
     dispatch({type: 'ADD_RECIPE', payload: [...state.recipes, ...recipe]});
-    dispatch({type: 'DISPLAY_ADD', payload: {displayDay: false, selectedDay: 'none'}});
+    if (state.auth.token)
+      dispatch({type: 'DISPLAY_ADD', payload: {displayDay: false, selectedDay: state.selectedDay.day}});
+    else
+      history.push('/');
+    console.log(`new length: ${state.recipes.length}`);
+    console.log(state.recipes);
     //navigate
   }
 
@@ -99,8 +85,8 @@ const Recipe = () => {
         calorie: ingredient.calorie
       });
     }
-    console.log(`pushed ${ingredient.name} in ingredients`);
-    console.log(JSON.stringify(ingredients));
+    //console.log(`pushed ${ingredient.name} in ingredients`);
+    //console.log(JSON.stringify(ingredients));
  };
 
   const DisplayInput = (object, callback) => {
@@ -121,13 +107,6 @@ const Recipe = () => {
 */
   return (
     <div style={styles.container}>
-      <div style={{display: 'block', border: '1px solid black'}}>
-        <h1>
-          {`${weekday[state.selectedDay.day.getDay()]} 
-          ${month[state.selectedDay.day.getMonth()]}
-          ${state.selectedDay.day.getDay()}`}
-        </h1>
-      </div>
       <h1>Create recipe</h1>
       <div style={{textAlign: 'center'}}>
         <label>
@@ -136,6 +115,7 @@ const Recipe = () => {
         </label>
         <h4>Cooking method</h4>
         <select name="cooking methods">
+          <option value="none" onSelect={() => generalInfo.cookingMethod = "none"}>None</option>
           <option value="oven" onSelect={() => generalInfo.cookingMethod = "oven"}>Oven</option>
           <option value="microwave" onSelect={() => generalInfo.cookingMethod = "microwave"}>Microwave</option>
           <option value="steam" onSelect={() => generalInfo.cookingMethod = "steam"}>Steam cooking</option>
