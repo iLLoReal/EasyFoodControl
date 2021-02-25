@@ -4,7 +4,6 @@ import 'react-calendar/dist/Calendar.css'
 import './Day.css';
 import { Context } from '../State/Provider/Store';
 import * as actions from '../State/Reducer/Reducer.constants'
-import { createPortal } from 'react-dom';
 
 const FoodSchedule = () => {
   const [state, dispatch] = useContext(Context);
@@ -12,20 +11,27 @@ const FoodSchedule = () => {
   const [selectedDay, setSelectedDay] = useState({display: false, day: 'none'})
 
     useEffect(() => {
-    //get recipes from axios to AsyncLocal
+    //get recipes from axios to AsyncLocal 
     });
 
   const DisplayRecipes = (gDate) => {
     //console.log(state.selectedDay.day)
-    let component = '';
-    for (let i = 0; i < state.meals.length; i++) {
-      if (state.meals[i].day.toString() === gDate.gDate) {
-        component = state.meals[i].recipes.map((recipe, id) => <li key={id}>{`${recipe.generalInformation.title}`}</li>);
+    let recipes = '';
+    let calories = 0;
+    for (let mealsIndex = 0; mealsIndex < state.meals.length; mealsIndex++) {
+      if (state.meals[mealsIndex].day.toString() === gDate.gDate) {
+        for (let recipesIndex = 0; recipesIndex < state.meals[mealsIndex].recipes.length; recipesIndex++) {
+          for (let ingredsIndex = 0; ingredsIndex < state.meals[mealsIndex].recipes[recipesIndex].ingredients.length; ingredsIndex++) {
+              calories += parseInt(state.meals[mealsIndex].recipes[recipesIndex].ingredients[ingredsIndex].calorie, 10);
+          }
+        }
+        recipes = state.meals[mealsIndex].recipes.map((recipe, id) => <li key={id}>{`${recipe.generalInformation.title}`}</li>);
       }
     }
     return (
       <div>
-        {component}
+        {calories}
+        {recipes}
       </div>
     );
   };
@@ -67,7 +73,10 @@ const FoodSchedule = () => {
   };
 
   return (
-    <div>
+    <div style={{margin: 'auto'}}>
+      <div>
+        test
+      </div>
       <Calendar onClickDay={Example.handleButtonClick} tileContent={Example} tileClassName='toto' />
     </div>
   );

@@ -28,7 +28,17 @@ const Reducer = (state, action) => {
        return {
          ...state,
          selectedDay: action.payload,
-       }
+       };
+     case actions.SET_RANGE:
+       return {
+         ...state,
+         selectedDate: action.payload,
+       };
+     case actions.SET_OBJECTIVES:
+       return {
+         ...state,
+         objectives: action.payload,
+       };
      default:
        return state;
    }

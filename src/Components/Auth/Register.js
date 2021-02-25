@@ -31,10 +31,16 @@ const Register = () => {
   return (
     <div>
       <form>
-        <input type='username' placeholder='User name' onChange={handleUsername}/>
-        <input type='password' placeholder='Password' onChange={handlePassword}/>
-        <button onClick={confirm}>confirm</button>
+        <label>Username : </label>
+        <div style={{textAlign: 'right'}}>
+          <input type='username' placeholder='User name' onChange={handleUsername}/>
+        </div>
+        <label>Password : </label>
+        <div style={{textAlign: 'right'}}>
+          <input type='password' placeholder='Password' onChange={handlePassword}/>
+        </div>
       </form>
+      <button onClick={confirm}>confirm</button>
    </div>
   )
 };

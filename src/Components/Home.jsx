@@ -23,7 +23,7 @@ const Home = () => {
 
    return (
    <div>
-     {auth.token ? (<Nav/>) : <AnonymousContent/>}
+     <Nav/>
    </div>
   )
 };

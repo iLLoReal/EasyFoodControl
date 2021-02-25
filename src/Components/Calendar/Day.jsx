@@ -3,12 +3,39 @@ import Recipe from '../Recipes';
 import { Context } from '../State/Provider/Store';
 import * as actions from '../State/Reducer/Reducer.constants';
 
+export const weekday = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday"
+];
+
+export const month = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December"
+];
+
 const Day = () => {
   const [state, dispatch] = useContext(Context)
   const [displayCreateRecipe, setDisplayCreateRecipe] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
-  const meal = { day: state.selectedDay.day, recipes: []};
+  const meal = { day: state.selectedDay.day, id: 0, recipes: []};
   const [recipeList, setRecipeList] = useState([]);
+  const [selectCookingMethod, setSelectCookingMethod] = useState('None');
+  let firstMealOfTheDay = 0;
 
   useEffect(() => {
     console.log(`useEffect Day : ${state.selectedDay.day}, found ${state.meals.length} meals`);
@@ -17,6 +44,8 @@ const Day = () => {
       for (let i = 0; i < state.meals.length; i++) {
         if (state.meals[i].day.toString() === state.selectedDay.day.toString()) {
           setRecipeList([...state.meals[i].recipes]);
+          if (noMeals)
+            firstMealOfTheDay = i;
           noMeals = false;
         }
         else
@@ -27,31 +56,6 @@ const Day = () => {
       setRecipeList([]);
     }
   }, [state.meals, state.selectedDay.day]);
-
-  const weekday = [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday"
-  ];
-  
-  const month = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December"
-  ];
 
   const styles = {
     button: {
@@ -101,7 +105,7 @@ const Day = () => {
 
   const handleSetSelectedRecipe = (e) => {
 //    const recipe = JSON.parse(e);
-    if (e.target.value === 'none')
+    if (e.target.value === 'None')
       return;
     for (let i = 0; i < state.recipes.length; i++)
     {
@@ -115,12 +119,22 @@ const Day = () => {
 
   const SelectRecipe = () => {
     return state.recipes.length ? (
-      <div> 
+      <div>
+        <div>
+          <span>Select Cooking Method </span>
+          <select name="cooking methods" onChange={(e) => setSelectCookingMethod(e.target.value)} value={selectedRecipe?.generalInformation.cookingMethod}>
+            <option value="None">None</option>
+            <option value="Oven">Oven</option>
+            <option value="Microwave">Microwave</option>
+            <option value="Steam">Steam cooking</option>
+            <option value="Pan">Pan cooking</option>
+          </select>
+        </div>
         <span>Select recipe </span>
-         <select style={styles.select} name="Select recipe" onChange={handleSetSelectedRecipe} value={selectedRecipe?.generalInformation.id}>
-           <option key={0} value='none'>none</option>
+         <select style={styles.select} name="Select recipe" onChange={handleSetSelectedRecipe}>
+           <option key={0} value='None'>None</option>
           {state.recipes ?
-            state.recipes.map((recipe, id) => {
+            state.recipes.filter(recipe => recipe.generalInformation.cookingMethod === selectCookingMethod).map((recipe, id) => {
               return (
                 <option key={id + 1} value={recipe.generalInformation.id}>
                   {recipe.generalInformation.id}: {recipe.generalInformation.title}
@@ -177,12 +191,37 @@ const Day = () => {
       <div style={{width: '100%'}}>
         <button onClick={handleAddRecipe}>ADD RECIPE</button>
       </div>
-    ) : <text>this should be displaying</text>;
+    ) : <span>No recipe to display</span>;
   };
+
+  const getFirstMealOfTheDay = () => {
+    let noMeals = true;
+    let firstMealOfTheDay = -1;
+    if (state.meals.length) {
+      for (let i = 0; i < state.meals.length; i++) {
+        if (state.meals[i].day.toString() === state.selectedDay.day.toString()) {
+          if (noMeals)
+            firstMealOfTheDay = i;
+          noMeals = false;
+        }
+        else
+          console.log(`state.meals[i].day(${state.meals[i].day}) != state.selectedDay.day (${state.selectedDay.day})`);
+      }
+    }
+    return firstMealOfTheDay;
+  }
 
   const addMeal = () => {
     recipeList.map((recipe) => meal.recipes.push(recipe));
-    dispatch({type: actions.ADD_MEAL, payload: [...state.meals, meal]});
+    const newMeals = state.meals.map(meal => meal);
+    meal.id = getFirstMealOfTheDay();
+    if (meal.id === -1) {
+      console.log(`getFirstMealOfTheDay failed`);
+      meal.id = state.meals.length + 1;
+    }
+    console.log(`First of the day : ${meal.id}`);
+      newMeals.splice(meal.id, 1);
+    dispatch({type: actions.ADD_MEAL, payload: [...newMeals, meal]});
     const selectedDay = {
       displayDay: false,
       day: state.selectedDay.day,
@@ -195,8 +234,7 @@ const Day = () => {
     return (
       <div>
         <ul>
-          {recipeList ? recipeList.map((recipe, id) => 
-          
+          {recipeList ? recipeList.map((recipe, id) =>
           <li key={id}>{recipe.generalInformation.title}
             <button style={styles.deleteButton} onClick={() => handleRemoveRecipe(id)}>X</button>
           </li>) : null}
