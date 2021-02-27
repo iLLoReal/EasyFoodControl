@@ -25,29 +25,29 @@ const Objectives = () => {
   const [measurements, setMeasurements] = useState(measurementsInitialState);
   const [activity, setActivity] = useState('Sedentary');
   const [gender, setGender] = useState('Male');
-  const [selectedDates, setSelectedDates] = useState({startingDate: null, endingDate: null});
 
-  const handleMeasurements = (event, object, prop) => {
-    object[prop] = event.target.value;
-    if (object[prop] !== '')
-      setMeasurements({...measurements, ...object});
-  };
+  useEffect(() => {
+    setObjectives({...state.objectives});
+    setMeasurements({...state.measurements});
+  },[state.objectives, state.measurements])
 
+
+  const handleDispatchMeasurements = () => {
+  }
   const handleDispatchObjectives = () => {
     if (!objectives.calories || !isNum(objectives.calories)) {
-      console.log('!calories');
       setObjectives({...objectives, calories: GetCalories('Oxford')})
     }
+
     if (!objectives.weight || !isNum(objectives.weight)) {
-      console.log('!weight');
       setObjectives({...objectives, weight: measurements.weight ? measurements.weight : 80})
     }
-    setObjectives({...objectives, startingDate: state.selectedDate.startingDate, endingDate: state.selectedDate.endingDate})
-    console.log(objectives);
+    dispatch({type: actions.SET_MEASUREMENTS, payload: {...measurements}});
 
-    dispatch({type: actions.SET_OBJECTIVES, payload: {...objectives}});
+   // console.log(objectives);
+   dispatch({type: actions.SET_OBJECTIVES, payload: {...objectives}});
   };
-  
+
   const handleSetActivity = (e) => {
     setActivity(e.target.value);
   }
@@ -100,10 +100,36 @@ const Objectives = () => {
 
   const handleSelectEndingDate = () => {
     dispatch({type: actions.SET_RANGE, payload: {...state.selectedDate, stage: 'end'}})
+    console.log(state.selectedDate);
   };
   
+  const handleSelectDateAuto = () => {
+    const newSelectedDate = {
+      stage: 'finished',
+      startingDate: new Date(),
+      endingDate: new Date()
+    };
+    if (state.selectedDate?.startingDate?.getTime()) {
+      newSelectedDate.startingDate = new Date(state.selectedDate.startingDate);
+      console.log('ici' + JSON.stringify(newSelectedDate));
+    }
+
+    const fullYear = newSelectedDate?.startingDate?.getFullYear();
+    const months = newSelectedDate?.startingDate?.getMonth() + ((measurements.weight - objectives.weight) / 2);
+    const days = newSelectedDate?.startingDate?.getDate() + ((measurements.weight - objectives.weight) % 2 ? 15 : 0);
+
+    console.log(measurements.weight);
+    console.log(objectives.weight);    
+    console.log(fullYear);
+    console.log(months);
+    console.log(days);
+    newSelectedDate.endingDate = new Date(fullYear, months, days);
+    console.log(`On devrait avoir la date ${JSON.stringify(newSelectedDate)}`);
+    dispatch({type: actions.SET_RANGE, payload: {...newSelectedDate}});
+  }
+
   const handleConfirmDate = () => {
-    setSelectedDates({startingDate: state.selectedDate.startingDate, endingDate: state.selectedDate.endingDate});
+    setObjectives({...objectives, startingDate: state.selectedDate.startingDate, endingDate: state.selectedDate.endingDate});
   }
 
   const handleCalorieObjective = (e) => {
@@ -119,14 +145,37 @@ const Objectives = () => {
     else
       setObjectives({...objectives, weight: measurements?.weight ? measurements.weight : measurementsInitialState.calories});
   };
-  
+
+  const handleMeasurementsAge = (e) => {
+    setMeasurements({...measurements, age: (isNum(e.target.value) ? e.target.value : 30)});
+  };
+  const handleMeasurementsHeight = (e) => {
+    setMeasurements({...measurements, height: (isNum(e.target.value) ? e.target.value : 180)});
+  };
+  const handleMeasurementsWeight = (e) => {
+    setMeasurements({...measurements, weight: isNum(e.target.value) ? e.target.value : 80});
+  };
 
   return (
     <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
       <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
         <h4>Type in current measures</h4>
         <form style={{textAlign: 'right'}}>
-          {DisplayInput({...measurements}, handleMeasurements)}
+          <label>
+            weight :
+            <input type="text" placeholder={measurements.weight} onChange={handleMeasurementsWeight}/>
+            <br/>
+          </label>
+          <label>
+            height :
+            <input type="text" placeholder={measurements.height} onChange={handleMeasurementsHeight}/>
+            <br/>
+          </label>
+          <label>
+            age :
+            <input type="text" placeholder={measurements.age} onChange={handleMeasurementsAge}/>
+            <br/>
+          </label>
           <div style={{textAlign: 'left'}}>
           Gender :
           <select onChange={handleSetGender} selected={'Male'}>
@@ -151,6 +200,8 @@ const Objectives = () => {
           <div style={{flex: 1, flexDirection: 'row'}}>
             <button onClick={handleSelectStartingDate}>Start</button>
             <button onClick={handleSelectEndingDate}>End</button>
+            <button onClick={handleSelectDateAuto}>Choose for me</button>
+
             {state.selectedDate.stage === 'finished' && <button onClick={handleConfirmDate}>Confirm</button>}
           </div>
           <div>

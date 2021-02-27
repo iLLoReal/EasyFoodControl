@@ -1,5 +1,6 @@
 import React, { useContext, useState } from 'react';
 import { useHistory } from 'react-router-dom';
+import { isNum } from './Calendar/Objectives';
 import { Context } from './State/Provider/Store';
 
 
@@ -35,10 +36,11 @@ const styles = {
 export const DisplayInput = (object, callback) => {
   const display = Object.keys(object).map((prop) => {
     const value = object[prop];
-    if (prop === 'id')
+    if (prop === 'id' || prop === 'nutriments')
       return null;
+    console.log(typeof(prop));
     return (
-      <label key={prop}>
+      <label key={prop+object}>
         {prop} :
         <input type="text" placeholder={value} onChange={(event) => callback ? callback(event, object, prop) : null}/>
         <br/>
@@ -51,26 +53,28 @@ export const DisplayInput = (object, callback) => {
 
 const Recipe = () => {
   const ingredientInitialState = {
-    id: 0,
+    id: -1,
     category: 'Vegetable',
     name: 'none',
     quantity: '0',
     price: '0',
     calorie: '0',
+    nutriments: {lipids: '0g', carbs: '0g', proteins: '0g'}
   };
 
   let ingredients = [];
-  const generalInfo = {title: 'none', cookingMethod: 'None', id: 0};
+  const [generalInfo, setGeneralInfo] = useState({title: 'none', cookingMethod: 'None', id: 0});
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [ingredient, setIngredient] = useState(ingredientInitialState);
   const [state, dispatch] = useContext(Context);
   const [ingredientList, setIngredientList] = useState([{}]);
+  const [nutriments, setNutriments] = useState({lipids: '0g', carbs: '0g', proteins: '0g'})
   let history = useHistory();
 
   const createRecipe = (event) => {
     console.log('New ingredient');
     if (state.recipes.length > 0) {
-      generalInfo.id = state.recipes[state.recipes.length - 1].generalInformation.id + 1;
+      setGeneralInfo({...generalInfo, id: state.recipes[state.recipes.length - 1].generalInformation.id + 1});
     }
     const recipe = [];
     recipe.push({
@@ -86,8 +90,12 @@ const Recipe = () => {
     dispatch({type: 'ADD_RECIPE', payload: [...state.recipes, ...recipe]});
     if (state.auth.token)
       dispatch({type: 'DISPLAY_ADD', payload: {displayDay: false, selectedDay: state.selectedDay.day}});
-    else
+    else {
+      setIngredientList([{}]);
       history.push('/');
+    }
+    setIngredientList([{}]);
+    setSelectedRecipe(null);
     console.log(`new length: ${state.recipes.length}`);
     console.log(state.recipes);
     //navigate
@@ -102,37 +110,60 @@ const Recipe = () => {
         return recipe;
       });
     }
+    else
+    console.log("c'est la magie d'internet dans modifyRecipe");
+    setSelectedRecipe(null);
+    setIngredientList([{}]);
     dispatch({type: 'ADD_RECIPE', payload: [...modified]});
   }
 
-  const handleChange = (event, object, prop) => {
+  const handleIngredientChange = (event, object, prop) => {
     object[prop] = event.target.value;
+    setIngredient({...object});
+  }
+
+  const handleNutrimentChange = (event, object, prop) => {
+    let nutriment = event.target.value;
+    if (nutriment[nutriment.length] !== 'g') {
+      nutriment += 'g';
+    }
+    object[prop] = event.target.value;
+    setNutriments({...object});
  };
 
   const addIngredient = () => {
     if (ingredient && ingredient?.name !== 'none') {
       if (ingredientList.find(a => a.name === ingredient.name)) {
         console.log(`Error : ingredient ${ingredient.name} already exists, choose another name`)
+        console.log('====================================');
+        console.log(ingredientList);
+        console.log('====================================');
         return;
       }
        if (ingredients.length > 0)
          ingredient.id = ingredients[ingredients.length - 1].id + 1;
        else if (selectedRecipe && ingredientList.length > 0) 
          ingredient.id = ingredientList[ingredientList.length - 1].id + 1;
+       else if (ingredient.id === -1) {
+         ingredient.id = 0;
+       }
       ingredients.push({
         id: ingredient.id,
         category: ingredient.category,
         name: ingredient.name,
         quantity: ingredient.quantity,
         price: ingredient.price,
-        calorie: ingredient.calorie
+        calorie: ingredient.calorie,
+        nutriments: {...nutriments}
       });
     }
     if (selectedRecipe) {
+      console.log('it is selected');
       setIngredientList([...ingredientList, ...ingredients]);
+      setIngredient(ingredientInitialState)
     }
-    //console.log(`pushed ${ingredient.name} in ingredients`);
-    //console.log(JSON.stringify(ingredients));
+      else
+      console.log("c'est la magie d'internet dans AddIngredient");
  };
 
  const modifyIngredient = () => {
@@ -151,7 +182,8 @@ const Recipe = () => {
       if (e.target.value === 'none') {
         setSelectedRecipe(null);
         setIngredient(ingredientInitialState);
-        generalInfo.cookingMethod = 'None';
+        setIngredientList([{}]);
+        setGeneralInfo({...generalInfo, cookingMethod: 'None'});
         return;
       }
       for (let i = 0; i < state.recipes.length; i++)
@@ -165,7 +197,7 @@ const Recipe = () => {
           }
           setIngredientList([...ingredients]);
           console.log(`ingredientList: ${JSON.stringify(ingredientList)}`);
-          generalInfo.cookingMethod = state.recipes[i].generalInformation.cookingMethod;
+          setGeneralInfo({...generalInfo, cookingMethod: state.recipes[i].generalInformation.cookingMethod});
           break;
         }
       }
@@ -178,17 +210,21 @@ const Recipe = () => {
         return;
       }
       setIngredient({...selectedRecipe?.ingredients[event.target.value]});
-//      setIngredient({...event.target.value});
+      setNutriments({...selectedRecipe?.ingredients[event.target.value].nutriments});
     }
 
     const handleSetCookingMethod = (e) => {
       if (selectedRecipe) {
+        console.log("On m'a bien baisé");
         setSelectedRecipe({...selectedRecipe, generalInformation: {
             ...selectedRecipe.generalInformation,
             cookingMethod: e.target.value
           }});
       }
-      generalInfo.cookingMethod = e.target.value
+      else
+        console.log("c'est la magie d'internet dans cooking");
+
+      setGeneralInfo({...generalInfo, cookingMethod: e.target.value})
     };
 
     const handleSetTitle = (e) => {
@@ -198,7 +234,12 @@ const Recipe = () => {
           title: e.target.value
         }});
       }
-      generalInfo.title = e.target.value;
+      else
+        console.log("c'est la magie d'internet dans title");
+      setGeneralInfo({...generalInfo, title: e.target.value});
+      console.log('====================================');
+      console.log(generalInfo);
+      console.log('====================================');
     }
 
     const cancelModifyRecipe = () => {
@@ -207,7 +248,7 @@ const Recipe = () => {
     }
 
     const handleRemoveIngredient = (id) => {
-      ingredients = ingredientList.map(ing => ing);
+      ingredients = ingredientList.map(ing => ing);//Utilisation ingredients
       ingredients.splice(id, 1);
       setIngredientList([...ingredients]);
     }
@@ -219,7 +260,7 @@ const Recipe = () => {
         <h4>Current ingredients : </h4>
         <ul>
           {selectedRecipe ? ingredientList.map((ingred, id) => 
-            <li key={ingred.name+id+ingredientList.length}>{ingred.name}
+            <li key={ingred}>{ingred.name}
               <button style={styles.deleteButton} onClick={() => handleRemoveIngredient(id)}>X</button>
             </li>) : null}
          </ul>
@@ -237,7 +278,7 @@ const Recipe = () => {
              {state.recipes.length ?
                state.recipes.map((recipe, id) => {
                  return (
-                   <option key={recipe.generalInformation.id + 1} value={recipe.generalInformation.id}>
+                   <option key={recipe} value={recipe.generalInformation.id}>
                      {recipe.generalInformation.id}: {recipe.generalInformation.title}
                    </option>
                    )
@@ -257,17 +298,19 @@ const Recipe = () => {
         <div>
           {selectedRecipe ? ( 
            <select name="Select ingredient" onChange={handleSetIngredient} selected={ingredient?.name === 'none' ? 'None' : ingredient?.name}>
-             <option key={selectedRecipe.generalInformation.title} value='None'>New</option>
+             <option key={selectedRecipe.generalInformation} value='None'>New</option>
             {selectedRecipe.ingredients.map((ingred, id) =>
-            <option key={ingred.name + ingred.id} value={id}>
+            <option key={JSON.stringify(ingred)} value={id}>
               {ingred.name}
             </option>)}
            </select>) : null}
         </div>
         <form style={styles.form} onSubmit={(event) => event.preventDefault}>
-          {DisplayInput(ingredient, handleChange)}
+          {DisplayInput({...ingredient}, handleIngredientChange)}
+          {DisplayInput({...nutriments}, handleNutrimentChange)}
         </form>
-        <button style={{display: 'block', margin: '0 auto 10px auto', width: '100%'}} onClick={ingredient.name !== 'none' ? modifyIngredient : addIngredient}>{ingredient.name !== 'none' ? `Change ${ingredient.name}` : 'add'}</button>
+        <button style={{display: 'block', margin: '0 auto 10px auto', width: '100%'}}
+        onClick={(ingredientList?.find(el => el.id === ingredient?.id)) ?  modifyIngredient : addIngredient}>{(ingredientList?.find(el => el.id === ingredient?.id)) ? `Change ${ingredient.name}` : 'add'}</button>
       </div>
       <div>
         {!selectedRecipe && (

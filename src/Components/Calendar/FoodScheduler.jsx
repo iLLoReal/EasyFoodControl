@@ -5,6 +5,8 @@ import './Day.css';
 import { Context } from '../State/Provider/Store';
 import * as actions from '../State/Reducer/Reducer.constants'
 
+
+
 const FoodSchedule = () => {
   const [state, dispatch] = useContext(Context);
   const [display, setDisplay] = useState(false);
@@ -14,12 +16,20 @@ const FoodSchedule = () => {
     //get recipes from axios to AsyncLocal 
     });
 
+    const isInRange = (date) => {
+      const curDate = date.getTime();
+      const from = state.selectedDate?.startingDate?.getTime();
+      const to = state.selectedDate?.endingDate?.getTime();
+      return (curDate >= from && curDate <= to);
+    }
+
   const DisplayRecipes = (gDate) => {
     //console.log(state.selectedDay.day)
     let recipes = '';
     let calories = 0;
+    console.log(gDate);
     for (let mealsIndex = 0; mealsIndex < state.meals.length; mealsIndex++) {
-      if (state.meals[mealsIndex].day.toString() === gDate.gDate) {
+      if (state.meals[mealsIndex].day.toString() === gDate.gDate.toString()) {
         for (let recipesIndex = 0; recipesIndex < state.meals[mealsIndex].recipes.length; recipesIndex++) {
           for (let ingredsIndex = 0; ingredsIndex < state.meals[mealsIndex].recipes[recipesIndex].ingredients.length; ingredsIndex++) {
               calories += parseInt(state.meals[mealsIndex].recipes[recipesIndex].ingredients[ingredsIndex].calorie, 10);
@@ -30,7 +40,7 @@ const FoodSchedule = () => {
     }
     return (
       <div>
-        {calories}
+        {calories}{isInRange(gDate.gDate) ? `/${state.objectives.calories}` : null}
         {recipes}
       </div>
     );
@@ -60,7 +70,7 @@ const FoodSchedule = () => {
       <div onClick={handleButtonClick}>
         <br/>
         {dateToString === state.selectedDay.day.toString() && state.selectedDay.displayDay ? 'Create or choose recipe' : 'add'}  
-        <DisplayRecipes gDate={date.toString()}/>
+        <DisplayRecipes gDate={date}/>
       </div>
       );
   }

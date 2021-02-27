@@ -1,13 +1,14 @@
 import React, { createContext, useReducer } from 'react';
 import Reducer from '../Reducer/Reducer';
 
-const initialState = {
+export const initialState = {
   auth: [],
   meals: [],
   recipes: [],
   selectedDay: {displayDay: false, day: ''},
   selectedDate: {stage: 'none', startingDate: null, endingDate: null},
-  objectives: {calories: 2800, weight: 80, startingDate: null, endingDate: null}
+  objectives: {calories: 2800, weight: 80, startingDate: null, endingDate: null},
+  measurements: {weight: 80, height: 180, age: 30}
 };
 
 const Store = ({ children }) => {

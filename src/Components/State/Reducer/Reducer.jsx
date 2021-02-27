@@ -1,4 +1,5 @@
 import  * as actions from './Reducer.constants.jsx';
+import { initialState } from '../Provider/Store';
 
 const Reducer = (state, action) => {
    switch (action.type) {
@@ -8,11 +9,10 @@ const Reducer = (state, action) => {
          auth: action.payload,
        };
      case actions.LOGOUT:
+       console.log('Notre state vaut ');
+       console.log(initialState);
        return {
-         ...state,
-         auth: action.payload,
-         meals: action.payload,
-         selectedDay: {displayDay: false, day: ''},
+         ...initialState,
        }
      case actions.ADD_RECIPE:
        return {
@@ -39,7 +39,12 @@ const Reducer = (state, action) => {
          ...state,
          objectives: action.payload,
        };
-     default:
+     case actions.SET_MEASUREMENTS:
+       return {
+          ...state,
+          measurements: action.payload,
+       };
+      default:
        return state;
    }
   };
