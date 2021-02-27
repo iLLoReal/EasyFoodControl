@@ -57,11 +57,15 @@ const ObjectivesScheduler = () => {
         }
       }
     }
+    let percentage = buffer.lipids + buffer.carbs + buffer.proteins;
     totalNutriments = {...buffer};
     totalNutriments.balance = {
-       lipidBalance: (totalNutriments.lipids/numberOfDays) + 'g',
-       carbsBalance: (totalNutriments.carbs/numberOfDays) + 'g',
-       proteinBalance: (totalNutriments.proteins/numberOfDays) + 'g'
+      lipidBalance: (totalNutriments.lipids/numberOfDays) + 'g',
+      lipidBalanceTotal: (totalNutriments.lipids/percentage * 100) + '%',
+      carbsBalance: (totalNutriments.carbs/numberOfDays) + 'g',
+      carbsBalanceTotal: (totalNutriments.carbs/percentage * 100) + '%',
+      proteinBalance: (totalNutriments.proteins/numberOfDays) + 'g',
+      proteinBalanceTotal: (totalNutriments.proteins/percentage * 100) + '%'
     };
     console.log(totalNutriments.balance);
     setCalorieBalance({date: date, calorieBalance: (totalCalories/numberOfDays), nutrimentBalance: {...totalNutriments.balance}});
@@ -97,9 +101,9 @@ const ObjectivesScheduler = () => {
           {gDate.gDate.toString() === calorieBalance?.date?.toString() && 
           (<b>{`(${displayDate(gDate.gDate, state.selectedDate.startingDate)} -> \
           ${displayDate(state.selectedDate.startingDate, gDate.gDate)} : calories in average = [${calorieBalance.calorieBalance}], nutriments in average =\
-           [${calorieBalance.nutrimentBalance.lipidBalance}\
-            ${calorieBalance.nutrimentBalance.carbsBalance}\
-            ${calorieBalance.nutrimentBalance.proteinBalance}]`}</b>)}
+           [${calorieBalance.nutrimentBalance.lipidBalance}(${calorieBalance.nutrimentBalance.lipidBalanceTotal})\
+            ${calorieBalance.nutrimentBalance.carbsBalance}(${calorieBalance.nutrimentBalance.carbsBalanceTotal})\
+            ${calorieBalance.nutrimentBalance.proteinBalance}(${calorieBalance.nutrimentBalance.proteinBalanceTotal})]`}</b>)}
         </div>
       </div>
     );

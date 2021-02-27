@@ -156,6 +156,7 @@ const Recipe = () => {
         calorie: ingredient.calorie,
         nutriments: {...nutriments}
       });
+      setIngredientList([...ingredientList, ...ingredients]);
     }
     if (selectedRecipe) {
       console.log('it is selected');
