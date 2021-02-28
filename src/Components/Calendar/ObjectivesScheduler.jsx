@@ -49,7 +49,7 @@ const ObjectivesScheduler = () => {
       if (isInRange(state.meals[mealsIndex].day) && isBefore(state.meals[mealsIndex].day, date)) {
         for (let recipesIndex = 0; recipesIndex < state.meals[mealsIndex].recipes.length; recipesIndex++) {
           for (let ingredsIndex = 0; ingredsIndex < state.meals[mealsIndex].recipes[recipesIndex].ingredients.length; ingredsIndex++) {
-              totalCalories += parseInt(state.meals[mealsIndex].recipes[recipesIndex].ingredients[ingredsIndex].calorie, 10);
+              totalCalories += parseInt(state.meals[mealsIndex].recipes[recipesIndex].ingredients[ingredsIndex].calorie);
               buffer.lipids += parseInt(state.meals[mealsIndex].recipes[recipesIndex].ingredients[ingredsIndex].nutriments.lipids);
               buffer.carbs += parseInt(state.meals[mealsIndex].recipes[recipesIndex].ingredients[ingredsIndex].nutriments.carbs);
               buffer.proteins += parseInt(state.meals[mealsIndex].recipes[recipesIndex].ingredients[ingredsIndex].nutriments.proteins);
@@ -58,6 +58,9 @@ const ObjectivesScheduler = () => {
       }
     }
     let percentage = buffer.lipids + buffer.carbs + buffer.proteins;
+    if (!percentage)
+      percentage = 1;
+    console.log(buffer);
     totalNutriments = {...buffer};
     totalNutriments.balance = {
       lipidBalance: (totalNutriments.lipids/numberOfDays) + 'g',
