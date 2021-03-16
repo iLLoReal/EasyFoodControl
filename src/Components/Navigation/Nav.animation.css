@@ -1,0 +1,46 @@
+.nav-enter {
+    opacity: 0;
+}
+.nav-enter-active {
+    opacity: 1;
+    transition: opacity 600ms;
+}
+.nav-exit {
+    opacity: 1;
+}
+
+.nav-exit-active {
+    opacity: 0;
+    transition: opacity 600ms;
+}
+
+.black-enter {
+    background-color: white;
+}
+
+.black-enter-active {
+    background-color: white;
+    transition: background-color 600ms;
+}
+.black-exit {
+    background-color: white;
+}
+.black-exit-active {
+    background-color: #767980;
+    transition: background-color 600ms;
+}
+
+.white-enter {
+    background-color: #767980;
+}
+.white-enter-active {
+    background-color: #767980;
+    transition: background-color 600ms;
+}
+.white-exit {
+    background-color: #767980;
+}
+.white-exit-active {
+    background-color: white;
+    transition: background-color 600ms;
+}
