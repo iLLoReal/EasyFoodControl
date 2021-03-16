@@ -9,8 +9,6 @@ const Reducer = (state, action) => {
          auth: action.payload,
        };
      case actions.LOGOUT:
-       console.log('Notre state vaut ');
-       console.log(initialState);
        return {
          ...initialState,
        }
@@ -34,6 +32,11 @@ const Reducer = (state, action) => {
          ...state,
          selectedDate: action.payload,
        };
+     case actions.SET_RESULT:
+       return {
+         ...state,
+         result: action.payload,
+       }
      case actions.SET_OBJECTIVES:
        return {
          ...state,

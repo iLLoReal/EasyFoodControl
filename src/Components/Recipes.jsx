@@ -1,4 +1,5 @@
 import React, { useContext, useState } from 'react';
+import axios from 'axios';
 import { useHistory } from 'react-router-dom';
 import { isNum } from './Calendar/Objectives';
 import { Context } from './State/Provider/Store';
@@ -85,15 +86,14 @@ const Recipe = () => {
   const [ingredientList, setIngredientList] = useState(...ingredientListInitialState);
   const [nutriments, setNutriments] = useState({...nutrimentsInitialState});
   const [errorMessage, setErrorMessage] = useState('');
+  const recipesRoute = 'http://localhost:3000/recipes';
   let history = useHistory();
 
-  const createRecipe = (event) => {
+  const createRecipe = async (event) => {
     let recipeId = state.recipes.length <= 0 ? 0 : state.recipes[state.recipes.length - 1].generalInformation.id + 1;
     const recipe = [];
-    console.log(`recipeId : ${recipeId}`);
 
     if (recipeId === -1) {
-      console.log('Error : id === -1');
       return;
     }
 
@@ -108,17 +108,22 @@ const Recipe = () => {
      }
     );
 
+    try {
+        await axios.post(recipesRoute, 
+        {
+           recipes: [...state.recipes, ...recipe]
+        })
+    } catch (err) {
+      console.log(err);
+    }
     dispatch({type: 'ADD_RECIPE', payload: [...state.recipes, ...recipe]});
-    if (state.auth.token)
+    if (state.auth.token)//Check from server if token is valid
       dispatch({type: 'DISPLAY_ADD', payload: {displayDay: false, selectedDay: state.selectedDay.day}});
     else {
       setIngredientList([...ingredientListInitialState]);
       history.push('/');
     }
     setIngredientList([...ingredientListInitialState]);
-  //console.log(`new length: ${state.recipes.length}`);
-  //console.log(state.recipes);
-    //navigate
   }
 
   const modifyRecipe = () => {
@@ -130,17 +135,14 @@ const Recipe = () => {
         return recipe;
       });
     }
-    else
-      console.log("No recipe selected");
-/*    setSelectedRecipe(null);
-    setIngredientList([...ingredientListInitialState]);*/
+    setIngredient(ingredientInitialState);
+    setNutriments(nutrimentsInitialState)
     dispatch({type: 'ADD_RECIPE', payload: [...modified]});
   }
 
   const handleIngredientChange = (event, object, prop) => {
     if (event.target.value !== '') {
       if (typeof(object[prop]) === 'number') {
-        console.log('We got a number here');
         if (!isNum(event.target.value)) {
           object[prop] = ingredient[prop];
           if (errorMessage === '') {
@@ -156,7 +158,6 @@ const Recipe = () => {
       else
         object[prop] = event.target.value;
       setIngredient({...object});
-      console.log('')
     }
   }
 
@@ -172,22 +173,17 @@ const Recipe = () => {
       else
         object[prop] = nutriments[prop];
       setNutriments({...object});
+      setIngredient({...ingredient, nutriments: {...object}});
     }
   };
 
   const addIngredient = () => {
-    console.log(` WtF ${JSON.stringify(ingredient)}`);
     if (ingredient?.id === -1 && ingredient.name !== 'none') {
       let ingredients = [];
         if (ingredientList?.length) {
-          console.log('WE GOT A LIVE ONE');
           if (ingredientList.find((ing) => ing.name === ingredient.name)) {
-            console.log('FOUND IT');
             setErrorMessage(`${ingredient.name} already exists, choose another name`);
             return;
-          }
-          else {
-            console.log('We didnt find it, we didn-t find it');
           }
           ingredients = ingredientList.map(ing => ing);
         }
@@ -206,18 +202,15 @@ const Recipe = () => {
  };
 
  const modifyIngredient = () => {
+   if (ingredientList.find((ing) => ing.name === ingredient.name && ing.id !== ingredient.id)) {
+        setErrorMessage(`${ingredient.name} already exists, please concider another name`);
+        return;
+   }
    let ingredients = ingredientList.map((ing) => ing.id === ingredient.id ? ingredient : ing);
    setIngredientList([...ingredients]);
-   /*console.log(`Ingredient list is now ${JSON.stringify(ingredientList)}`);
-   for (let i = 0; i < state.recipes.length; i++) {
-     if (state.recipes[i].generalInformation.id === selectedRecipe.generalInformation.id) {
-        console.log(`Dans notre state on a ${JSON.stringify(state.recipes[i].ingredients)}`);
-      }
-   }*/
-  }
+ }
 
  const handleSetSelectedRecipe = (e) => {
-  //    const recipe = JSON.parse(e);
       if (e.target.value === 'none') {
         setSelectedRecipe(null);
         setIngredient(ingredientInitialState);
@@ -232,11 +225,9 @@ const Recipe = () => {
           setIngredient(ingredientInitialState);
           let ingredients = [];
           for (let j = 0; j < state.recipes[i].ingredients.length; j++) {
-            console.log(`added ${JSON.stringify(state.recipes[i].ingredients[j])} to ingredients`);
             ingredients.push(state.recipes[i].ingredients[j]);
           }
           setIngredientList([...ingredients]);
-          console.log(`ingredientList: ${JSON.stringify(ingredientList)}`);
           setGeneralInfo({...generalInfo, cookingMethod: state.recipes[i].generalInformation.cookingMethod});
           break;
         }
@@ -248,7 +239,6 @@ const Recipe = () => {
         if (event.target.value === 'None') {
           setIngredient({...ingredient, id: -1, name: 'none'});
           setNutriments({...nutrimentsInitialState});
-          console.log('reseted ingredient & nutriments state');
           return;
         }
         if (!ingredientList.find((ing) => ing.id.toString() === event.target.value))
@@ -264,10 +254,7 @@ const Recipe = () => {
             ...selectedRecipe.generalInformation,
             cookingMethod: e.target.value
           }});
-        console.log("selected recipe's cooking method was modified");
       }
-      else
-        console.log("No selected recipe");
       setGeneralInfo({...generalInfo, cookingMethod: e.target.value})
     };
 
@@ -279,11 +266,7 @@ const Recipe = () => {
         }});
       }
       else if (e.target.value !== '') {
-        console.log("c'est la magie d'internet dans title");
         setGeneralInfo({...generalInfo, title: e.target.value});
-        console.log('====================================');
-        console.log(generalInfo);
-        console.log('====================================');
       }
     }
 
@@ -296,7 +279,6 @@ const Recipe = () => {
       let ingredients = ingredientList.map(ing => ing);//Utilisation ingredients
       ingredients.splice(id, 1);
       setIngredientList([...ingredients]);
-      console.log(ingredientList);
     }
 
     const isIngredientInList = (id) => {
@@ -337,7 +319,7 @@ const Recipe = () => {
            </div>
         ) : (null)}
         <h4>Cooking method</h4>
-        <select name="cooking methods" selected={true/*?*/} value={selectedRecipe?.generalInformation.cookingMethod} onChange={handleSetCookingMethod}>
+        <select name="cooking methods" selected={true} value={selectedRecipe?.generalInformation.cookingMethod} onChange={handleSetCookingMethod}>
           <option value="None">None</option>
           <option value="Oven">Oven</option>
           <option value="Microwave">Microwave</option>

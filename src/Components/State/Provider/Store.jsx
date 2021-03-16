@@ -8,7 +8,8 @@ export const initialState = {
   selectedDay: {displayDay: false, day: ''},
   selectedDate: {stage: 'none', startingDate: null, endingDate: null},
   objectives: {calories: 2800, weight: 80, startingDate: null, endingDate: null},
-  measurements: {weight: 80, height: 180, age: 30}
+  measurements: {weight: 80, height: 180, age: 30},
+  result: [],
 };
 
 const Store = ({ children }) => {

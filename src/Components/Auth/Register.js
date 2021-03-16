@@ -1,4 +1,5 @@
 import React, { useState, useContext } from 'react';
+import axios from 'axios';
 import { useHistory } from 'react-router-dom';
 import { Context } from '../State/Provider/Store';
 import * as actions from '../State/Reducer/Reducer.constants';
@@ -7,7 +8,9 @@ const Register = () => {
   const [state, dispatch] = useContext(Context);
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   let history = useHistory();
+  const registerRoute = 'http://localhost:3000/register';
 
   const handlePassword = (e) => {
     setPassword(e.target.value.toString());
@@ -17,28 +20,52 @@ const Register = () => {
     setUsername(e.target.value.toString());
   };
 
-  const confirm = () => {
-    if (!username || !password)
+  const handleEmail = (e) => {
+    setEmail(e.target.value.toString());
+  }
+
+  function validateEmail(email) {
+    const regex = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return regex.test(String(email).toLowerCase());
+}
+
+  const confirm = async () => {
+    if (!username || !password || !email || !validateEmail(email))
       return;
-    const auth = {username: username, password: password, token: 'yes'};
-    //Call register with axios
-    //If user exists return error (catch(e) => `user ${username} already exists)
-    //Get Token and log user in
-    dispatch({type: actions.REGISTER, payload: auth})
-    history.push("/");
+    try {
+         const result = await axios.post(
+          registerRoute,
+            {
+               login: username,
+               password: password,
+               email: email,
+            });
+         const auth = {token: result.data.token};
+         dispatch({type: actions.REGISTER, payload: auth})
+         history.push('/');
+      }
+      catch(error) {
+          console.log(error);
+      }
   };
 
   return (
     <div>
       <form>
-        <label>Username : </label>
-        <div style={{textAlign: 'right'}}>
-          <input type='username' placeholder='User name' onChange={handleUsername}/>
+        <div style={{textAlign: 'left'}}>
+          <label>Username : </label>
+          <input type='text' placeholder='User name' onChange={handleUsername}/>
         </div>
-        <label>Password : </label>
-        <div style={{textAlign: 'right'}}>
+        <div style={{textAlign: 'left'}}>
+          <label>Email : </label>
+          <input type='text' placeholder='Email' onChange={handleEmail}/>
+        </div>
+        <div style={{textAlign: 'left'}}>
+          <label>Password : </label>
           <input type='password' placeholder='Password' onChange={handlePassword}/>
         </div>
+        {email.length && !validateEmail(email) && (
+        <div style={{border: "1px solid black", color: 'red', textAlign: 'center', backgroundColor: 'black'}}>Invalid email format</div>)}
       </form>
       <button onClick={confirm}>confirm</button>
    </div>

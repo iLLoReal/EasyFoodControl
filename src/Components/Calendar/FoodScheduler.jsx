@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useReducer, useState } from 'react';
+import React, { useContext, useState } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css'
 import './Day.css';
@@ -12,10 +12,6 @@ const FoodSchedule = () => {
   const [display, setDisplay] = useState(false);
   const [selectedDay, setSelectedDay] = useState({display: false, day: 'none'})
 
-    useEffect(() => {
-    //get recipes from axios to AsyncLocal 
-    });
-
     const isInRange = (date) => {
       const curDate = date.getTime();
       const from = state.selectedDate?.startingDate?.getTime();
@@ -24,10 +20,9 @@ const FoodSchedule = () => {
     }
 
   const DisplayRecipes = (gDate) => {
-    //console.log(state.selectedDay.day)
     let recipes = '';
     let calories = 0;
-    console.log(gDate);
+
     for (let mealsIndex = 0; mealsIndex < state.meals.length; mealsIndex++) {
       if (state.meals[mealsIndex].day.toString() === gDate.gDate.toString()) {
         for (let recipesIndex = 0; recipesIndex < state.meals[mealsIndex].recipes.length; recipesIndex++) {
@@ -47,25 +42,15 @@ const FoodSchedule = () => {
   };
   
 
-  const Example = ({date, view}) => {
+  const Scheduler = ({date, view}) => {
     const handleButtonClick = () => {
-        console.log('add meal');
         setDisplay(true);
         const selectedDayConst = {displayDay: display, day: date};
         setSelectedDay({...selectedDayConst})
-        console.log(`now we have ${selectedDay.day}`);
         dispatch({type: actions.DISPLAY_DAY, payload: selectedDayConst});
     }
 
-    //state.recipes?.map((recipe) => console.log(`ici ${JSON.stringify(recipe)}`))
-
-
-/*    if (state.recipes.length) {
-      state.recipes.map((recipe) => console.log(recipe.generalInformation.title));
-    }*/
-
     const dateToString = date.toString();
-    //console.log(`FFS : ${dateToString}`);
     return (
       <div onClick={handleButtonClick}>
         <br/>
@@ -74,20 +59,10 @@ const FoodSchedule = () => {
       </div>
       );
   }
-  
-  const HandleClickDay = (value, event) => {
-    console.log('Hello');
-    console.log(`This is the day : ${value}`);
-    dispatch({ type: 'ADD_RECIPE', payload: state.recipes });
-    dispatch({ type: 'ADD_MEAL', payload: state.recipes });
-  };
 
   return (
     <div style={{margin: 'auto'}}>
-      <div>
-        test
-      </div>
-      <Calendar onClickDay={Example.handleButtonClick} tileContent={Example} tileClassName='toto' />
+      <Calendar onClickDay={Scheduler.handleButtonClick} tileContent={Scheduler} tileClassName='curTile' />
     </div>
   );
 };

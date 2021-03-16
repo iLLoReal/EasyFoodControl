@@ -1,4 +1,5 @@
-import React, { useContext, useEffect, useReducer, useState } from 'react';
+import React, { useContext, useState } from 'react';
+import {useHistory} from 'react-router-dom';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css'
 import './Day.css';
@@ -10,10 +11,9 @@ import * as actions from '../State/Reducer/Reducer.constants'
 
 const ObjectivesScheduler = () => {
   const [state, dispatch] = useContext(Context);
-  const [display, setDisplay] = useState(false);
-  const [selectedDay, setSelectedDay] = useState({display: false, day: 'none'})
+  const [result, setResult] = useState();
   const [calorieBalance, setCalorieBalance] = useState(0);
-  const [nutrimentBalance, setNutrimentBalance] = useState({});
+  const history = useHistory();
 
   const isInRange = (date) => {
     const curDate = date.getTime();
@@ -27,51 +27,99 @@ const ObjectivesScheduler = () => {
     const dateTo = to.getTime();
     return curDate <= dateTo;
   }
-  function treatAsUTC(date) {
+  const treatAsUTC = (date) => {
     var result = new Date(date);
     result.setMinutes(result.getMinutes() - result.getTimezoneOffset());
     return result;
   }
 
-  function daysBetween(startDate, endDate) {
+  const daysBetween = (startDate, endDate) => {
     var millisecondsPerDay = 24 * 60 * 60 * 1000;
     return (treatAsUTC(endDate) - treatAsUTC(startDate)) / millisecondsPerDay;
   }
 
+  const getStyle = (percentage, recommended, margin) => {
+    let style = '#8CC152';
+
+    if (percentage > recommended){
+      style = (percentage > (recommended + margin)) ? 'red' : 'orange';
+    }
+    else if (percentage < recommended) {
+      style = (percentage < recommended - margin) ? 'red' : 'purple';
+    }
+    return (style);
+  }
+
   const getCalorieBalance = (date) => {
+    const lipidsRecommended = 35;
+    const carbsRecommended = 50;
+    const proteinsRecommended = 15;
+    const nutrimentsMarginPermitted = 15;
+    
     let totalCalories = 0;
     let totalNutriments = {lipids: '', carbs: '', proteins: ''};
-    let buffer = {lipids: 0, carbs: 0, proteins: 0};
+    let bufferNutriments = {lipids: 0, carbs: 0, proteins: 0};
+    let bufferBalanceJourney = [];
 
     let numberOfDays =  parseInt(daysBetween(state.selectedDate.startingDate, date)) + 1;
 
     for (let mealsIndex = 0; mealsIndex < state.meals.length; mealsIndex++) {
       if (isInRange(state.meals[mealsIndex].day) && isBefore(state.meals[mealsIndex].day, date)) {
+        let currentTotal = {totalCalorie: 0, lipids: 0, carbs: 0, proteins: 0, date: state.meals[mealsIndex].day};
         for (let recipesIndex = 0; recipesIndex < state.meals[mealsIndex].recipes.length; recipesIndex++) {
           for (let ingredsIndex = 0; ingredsIndex < state.meals[mealsIndex].recipes[recipesIndex].ingredients.length; ingredsIndex++) {
-              totalCalories += parseInt(state.meals[mealsIndex].recipes[recipesIndex].ingredients[ingredsIndex].calorie);
-              buffer.lipids += parseInt(state.meals[mealsIndex].recipes[recipesIndex].ingredients[ingredsIndex].nutriments.lipids);
-              buffer.carbs += parseInt(state.meals[mealsIndex].recipes[recipesIndex].ingredients[ingredsIndex].nutriments.carbs);
-              buffer.proteins += parseInt(state.meals[mealsIndex].recipes[recipesIndex].ingredients[ingredsIndex].nutriments.proteins);
+              let currentCalorie = state.meals[mealsIndex].recipes[recipesIndex].ingredients[ingredsIndex].calorie;
+              let currentLipids = state.meals[mealsIndex].recipes[recipesIndex].ingredients[ingredsIndex].nutriments.lipids;
+              let currentCarbs = state.meals[mealsIndex].recipes[recipesIndex].ingredients[ingredsIndex].nutriments.carbs;
+              let currentProteins = state.meals[mealsIndex].recipes[recipesIndex].ingredients[ingredsIndex].nutriments.proteins;
+
+              currentTotal.totalCalorie += parseInt(currentCalorie);
+              currentTotal.lipids += parseInt(currentLipids);
+              currentTotal.carbs += parseInt(currentCarbs);
+              currentTotal.proteins += parseInt(currentProteins);
+
+              totalCalories += parseInt(currentCalorie);
+              bufferNutriments.lipids += currentTotal.lipids;
+              bufferNutriments.carbs += currentTotal.carbs;
+              bufferNutriments.proteins += currentTotal.proteins;
           }
         }
+        let percentage = currentTotal.lipids + currentTotal.carbs + currentTotal.proteins;
+        if (!percentage)
+          percentage = 1;
+        bufferBalanceJourney.push({
+          totalCalorie: currentTotal.totalCalorie,
+          lipids: Math.round((currentTotal.lipids / percentage * 100)),
+          carbs: Math.round((currentTotal.carbs / percentage * 100)),
+          proteins: Math.round((currentTotal.proteins / percentage * 100)),
+          date: currentTotal.date
+        });
       }
     }
-    let percentage = buffer.lipids + buffer.carbs + buffer.proteins;
+
+    let totalCalorieBalance = {
+      value: Math.round(totalCalories/numberOfDays),
+      style: getStyle((((totalCalories/numberOfDays) / state.objectives.calories) * 100), 100, nutrimentsMarginPermitted)
+    };
+  
+    let percentage = bufferNutriments.lipids + bufferNutriments.carbs + bufferNutriments.proteins;
     if (!percentage)
       percentage = 1;
-    console.log(buffer);
-    totalNutriments = {...buffer};
+    totalNutriments = {...bufferNutriments};
     totalNutriments.balance = {
+      lipidsTotal: totalNutriments.lipids,
       lipidBalance: (totalNutriments.lipids/numberOfDays) + 'g',
-      lipidBalanceTotal: (totalNutriments.lipids/percentage * 100) + '%',
+      lipidBalanceTotal: {value: Math.round((totalNutriments.lipids/percentage * 100)) + '%', style: getStyle((totalNutriments.lipids/percentage * 100), lipidsRecommended, nutrimentsMarginPermitted)},
+      carbsTotal: totalNutriments.carbs,
       carbsBalance: (totalNutriments.carbs/numberOfDays) + 'g',
-      carbsBalanceTotal: (totalNutriments.carbs/percentage * 100) + '%',
+      carbsBalanceTotal: {value: Math.round((totalNutriments.carbs/percentage * 100)) + '%', style: getStyle((totalNutriments.carbs/percentage * 100), carbsRecommended, nutrimentsMarginPermitted)},
+      proteinTotal: totalNutriments.proteins,
       proteinBalance: (totalNutriments.proteins/numberOfDays) + 'g',
-      proteinBalanceTotal: (totalNutriments.proteins/percentage * 100) + '%'
+      proteinBalanceTotal: {value: Math.round((totalNutriments.proteins/percentage * 100)) + '%', style: getStyle((totalNutriments.proteins/percentage * 100), proteinsRecommended, nutrimentsMarginPermitted)}
     };
-    console.log(totalNutriments.balance);
-    setCalorieBalance({date: date, calorieBalance: (totalCalories/numberOfDays), nutrimentBalance: {...totalNutriments.balance}});
+    setCalorieBalance({date: date, calorieBalance: {...totalCalorieBalance}, nutrimentBalance: {...totalNutriments.balance}});
+
+    setResult({date: date, calorieBalance: {...totalCalorieBalance}, nutrimentBalance: {...totalNutriments.balance}, balanceJourney: bufferBalanceJourney})
   }
 
   const displayDate = (curDate, startingDate) => {
@@ -84,8 +132,16 @@ const ObjectivesScheduler = () => {
     return date;
   }
 
+  const showGraph = () => {
+    dispatch({type: actions.SET_RESULT, payload: result});
+    history.push('/ObjectivesChart')
+  }
+
   const DisplayCalories = (gDate) => {
-    //console.log(state.selectedDay.day)
+    const lipidsPercent = '35%';
+    const carbsPercent = '50%';
+    const proteinsPercent = '15%';
+
     let calories = 0;
     for (let mealsIndex = 0; mealsIndex < state.meals.length; mealsIndex++) {
       if (state.meals[mealsIndex].day.toString() === gDate.gDate.toString()) {
@@ -97,16 +153,21 @@ const ObjectivesScheduler = () => {
         }
       }
     }
+
     return (
-      <div style={{color: 'black'}}>
+      <div style={{color: 'black', backgroundColor: 'yellow', borderRadius: 8}}>
         {calories}/{state.objectives.calories}
         <div>
           {gDate.gDate.toString() === calorieBalance?.date?.toString() && 
-          (<b>{`(${displayDate(gDate.gDate, state.selectedDate.startingDate)} -> \
-          ${displayDate(state.selectedDate.startingDate, gDate.gDate)} : calories in average = [${calorieBalance.calorieBalance}], nutriments in average =\
-           [${calorieBalance.nutrimentBalance.lipidBalance}(${calorieBalance.nutrimentBalance.lipidBalanceTotal})\
-            ${calorieBalance.nutrimentBalance.carbsBalance}(${calorieBalance.nutrimentBalance.carbsBalanceTotal})\
-            ${calorieBalance.nutrimentBalance.proteinBalance}(${calorieBalance.nutrimentBalance.proteinBalanceTotal})]`}</b>)}
+          (<div><b>{`(${displayDate(gDate.gDate, state.selectedDate.startingDate)} -> \
+          ${displayDate(state.selectedDate.startingDate, gDate.gDate)}`}
+           : calories in average = [<span style={{color: calorieBalance.calorieBalance.style}}>{`${calorieBalance.calorieBalance.value}`}</span>{`/${state.objectives.calories}`}],
+           [lipids: <span style={{color: calorieBalance.nutrimentBalance.lipidBalanceTotal.style}}>{`${calorieBalance.nutrimentBalance.lipidBalanceTotal.value}`}</span>{lipidsPercent}<br/>
+            carbs: <span style={{color: calorieBalance.nutrimentBalance.carbsBalanceTotal.style}}>{`${calorieBalance.nutrimentBalance.carbsBalanceTotal.value}`}</span>{carbsPercent}<br/>
+            proteins: <span style={{color: calorieBalance.nutrimentBalance.proteinBalanceTotal.style}}>{`${calorieBalance.nutrimentBalance.proteinBalanceTotal.value}`}</span>{proteinsPercent}
+            ]</b>
+          <br/><span styles={{textDecoration: 'underline'}} onClick={showGraph}>Show graph</span>
+          </div>)}
         </div>
       </div>
     );
@@ -115,8 +176,7 @@ const ObjectivesScheduler = () => {
 
   const Tiles = ({date, view}) => {
     const handleButtonClick = () => {
-        //  selectedDate: {stage: 'none', startingDate: null, endingDate: null},
-
+ 
         switch(state.selectedDate?.stage) {
             case 'none':
                 break;
@@ -133,7 +193,6 @@ const ObjectivesScheduler = () => {
             default:
                 break;
         }
-        //dispatch({type: actions.DISPLAY_DAY, payload: selectedDayConst});
     }
 
     return (
@@ -141,7 +200,7 @@ const ObjectivesScheduler = () => {
         <br />
         {(state.selectedDate?.stage === 'finished' && isInRange(date)) ? 
         (<DisplayCalories gDate={date}/>) : 
-        'Out of Range'}
+        ''}
       </div>
       );
   }

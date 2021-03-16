@@ -1,9 +1,12 @@
 import React, { useState, useContext, useEffect } from 'react';
+
+import axios from 'axios';
+
 import { Context } from '../State/Provider/Store';
-import { DisplayInput } from '../Recipes';
 
 import {weekday, month} from './Day';
 import * as actions from '../State/Reducer/Reducer.constants';
+import { useHistory } from 'react-router-dom';
 
 export const isNum = (val) => (/^\d+$/.test(val));
 
@@ -22,19 +25,19 @@ const Objectives = () => {
 
   const [state, dispatch] = useContext(Context);
   const [objectives, setObjectives] = useState(objectivesInitialState);
+  const history = useHistory();
   const [measurements, setMeasurements] = useState(measurementsInitialState);
   const [activity, setActivity] = useState('Sedentary');
   const [gender, setGender] = useState('Male');
+  const setMeasurementsRoute = 'http://localhost:3000/user/setMeasurements';
+  const setObjectivesRoute = 'http://localhost:3000/user/setObjectives';
 
   useEffect(() => {
     setObjectives({...state.objectives});
     setMeasurements({...state.measurements});
   },[state.objectives, state.measurements])
 
-
-  const handleDispatchMeasurements = () => {
-  }
-  const handleDispatchObjectives = () => {
+  const handleDispatchObjectives = async () => {
     if (!objectives.calories || !isNum(objectives.calories)) {
       setObjectives({...objectives, calories: GetCalories('Oxford')})
     }
@@ -42,10 +45,48 @@ const Objectives = () => {
     if (!objectives.weight || !isNum(objectives.weight)) {
       setObjectives({...objectives, weight: measurements.weight ? measurements.weight : 80})
     }
-    dispatch({type: actions.SET_MEASUREMENTS, payload: {...measurements}});
 
-   // console.log(objectives);
-   dispatch({type: actions.SET_OBJECTIVES, payload: {...objectives}});
+    const sendObjectives = async () => { 
+      try {
+          await axios.post(
+          setObjectivesRoute,
+          {
+            token: state.auth.token,
+            objective: objectives
+          }
+        )
+          return true;
+     } catch(err) {
+        console.log(err);
+        return false;
+      }
+    }
+
+    const sendMeasurements = async () => { 
+      try {
+          await axios.post(
+          setMeasurementsRoute, 
+          {
+            token: state.auth.token,
+            measurements: measurements,
+          }
+        );
+          return true;
+      } catch(err) {
+        console.log(err);
+        return false;
+      }
+    }
+
+    const measurementsAxiosResult = await sendMeasurements();
+    if (measurementsAxiosResult) {
+      dispatch({type: actions.SET_MEASUREMENTS, payload: {...measurements}});
+    }
+
+    const objectivesAxiosResult = await sendObjectives();
+    if (objectivesAxiosResult) {
+      dispatch({type: actions.SET_OBJECTIVES, payload: {...objectives}});
+    }
   };
 
   const handleSetActivity = (e) => {
@@ -100,7 +141,6 @@ const Objectives = () => {
 
   const handleSelectEndingDate = () => {
     dispatch({type: actions.SET_RANGE, payload: {...state.selectedDate, stage: 'end'}})
-    console.log(state.selectedDate);
   };
   
   const handleSelectDateAuto = () => {
@@ -111,20 +151,13 @@ const Objectives = () => {
     };
     if (state.selectedDate?.startingDate?.getTime()) {
       newSelectedDate.startingDate = new Date(state.selectedDate.startingDate);
-      console.log('ici' + JSON.stringify(newSelectedDate));
     }
 
     const fullYear = newSelectedDate?.startingDate?.getFullYear();
     const months = newSelectedDate?.startingDate?.getMonth() + ((measurements.weight - objectives.weight) / 2);
     const days = newSelectedDate?.startingDate?.getDate() + ((measurements.weight - objectives.weight) % 2 ? 15 : 0);
 
-    console.log(measurements.weight);
-    console.log(objectives.weight);    
-    console.log(fullYear);
-    console.log(months);
-    console.log(days);
     newSelectedDate.endingDate = new Date(fullYear, months, days);
-    console.log(`On devrait avoir la date ${JSON.stringify(newSelectedDate)}`);
     dispatch({type: actions.SET_RANGE, payload: {...newSelectedDate}});
   }
 
@@ -158,6 +191,10 @@ const Objectives = () => {
 
   return (
     <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+      {state.objectives.startingDate && (
+      <div>
+        <button onClick={() => history.push('/ObjectivesChart')}>Consult objectives stats</button>
+      </div>)}
       <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
         <h4>Type in current measures</h4>
         <form style={{textAlign: 'right'}}>

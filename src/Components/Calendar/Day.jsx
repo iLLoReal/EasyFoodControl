@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
+import axios from 'axios';
 import Recipe from '../Recipes';
 import { Context } from '../State/Provider/Store';
 import * as actions from '../State/Reducer/Reducer.constants';
@@ -35,10 +36,10 @@ const Day = () => {
   const meal = { day: state.selectedDay.day, id: 0, recipes: []};
   const [recipeList, setRecipeList] = useState([]);
   const [selectCookingMethod, setSelectCookingMethod] = useState('None');
+  const mealRoute = 'http://localhost:3000/user/meals';
   let firstMealOfTheDay = 0;
 
   useEffect(() => {
-    console.log(`useEffect Day : ${state.selectedDay.day}, found ${state.meals.length} meals`);
     let noMeals = true;
     if (state.meals.length) {
       for (let i = 0; i < state.meals.length; i++) {
@@ -48,8 +49,6 @@ const Day = () => {
             firstMealOfTheDay = i;
           noMeals = false;
         }
-        else
-          console.log(`state.meals[i].day(${state.meals[i].day}) != state.selectedDay.day (${state.selectedDay.day})`);
       }
     }
     if (noMeals) {
@@ -104,17 +103,15 @@ const Day = () => {
   }
 
   const handleSetSelectedRecipe = (e) => {
-//    const recipe = JSON.parse(e);
     if (e.target.value === 'None')
       return;
     for (let i = 0; i < state.recipes.length; i++)
     {
-      if (state.recipes[i].generalInformation.id.toString() === e.target.value) { // Remplacer par une ID
-        setSelectedRecipe(state.recipes[i]); //gaffe a la copy en profondeur ou non
+      if (state.recipes[i].generalInformation.id.toString() === e.target.value) {
+        setSelectedRecipe(state.recipes[i]);
         break;
       }
     }
-//    console.log(`changed for ${selectedRecipe.generalInformation.title}`);
   };
 
   const SelectRecipe = () => {
@@ -179,10 +176,8 @@ const Day = () => {
   }
 
   const handleRemoveRecipe = (id) => {
-    //console.log(`removing element ${recipeList[id].generalInformation.title} corresponding to number ${id}`);
     if (id > -1)
       recipeList.splice(id, 1);
-    //recipeList.map((recipe, id) => console.log(`recipe ${id} : ${recipe.generalInformation.title} `));
     setRecipeList([...recipeList]);
   }
 
@@ -204,30 +199,37 @@ const Day = () => {
             firstMealOfTheDay = i;
           noMeals = false;
         }
-        else
-          console.log(`state.meals[i].day(${state.meals[i].day}) != state.selectedDay.day (${state.selectedDay.day})`);
       }
     }
     return firstMealOfTheDay;
   }
 
-  const addMeal = () => {
+  const addMeal = async () => {
     recipeList.map((recipe) => meal.recipes.push(recipe));
     const newMeals = state.meals.map(meal => meal);
     meal.id = getFirstMealOfTheDay();
     if (meal.id === -1) {
-      console.log(`getFirstMealOfTheDay failed`);
       meal.id = state.meals.length + 1;
     }
-    console.log(`First of the day : ${meal.id}`);
-      newMeals.splice(meal.id, 1);
-    dispatch({type: actions.ADD_MEAL, payload: [...newMeals, meal]});
-    const selectedDay = {
+    newMeals.splice(meal.id, 1);
+    try {
+      await axios.post(
+        mealRoute,
+        {
+         token: state.auth.token,
+         meals: [...newMeals, meal],
+        });
+    }
+   catch(error) {
+       console.log(error);
+   }
+   dispatch({type: actions.ADD_MEAL, payload: [...newMeals, meal]}); // Mettre le dispatch en amont ? chopper les données quand on
+
+   const selectedDay = {
       displayDay: false,
       day: state.selectedDay.day,
     };
     dispatch({type: actions.DISPLAY_DAY, payload: selectedDay});
-    console.log('Added meal to scheduler');
   };
 
   const Validate = () => {
