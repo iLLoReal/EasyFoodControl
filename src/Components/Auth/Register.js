@@ -1,8 +1,8 @@
 import React, { useState, useContext } from 'react';
-import axios from 'axios';
 import { useHistory } from 'react-router-dom';
 import { Context } from '../State/Provider/Store';
 import * as actions from '../State/Reducer/Reducer.constants';
+import RegisterApiCalls from '../Api/RegisterApiCalls';
 
 const Register = () => {
   const [state, dispatch] = useContext(Context);
@@ -10,7 +10,6 @@ const Register = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   let history = useHistory();
-  const registerRoute = 'http://localhost:3000/register';
 
   const handlePassword = (e) => {
     setPassword(e.target.value.toString());
@@ -32,21 +31,15 @@ const Register = () => {
   const confirm = async () => {
     if (!username || !password || !email || !validateEmail(email))
       return;
-    try {
-         const result = await axios.post(
-          registerRoute,
-            {
-               login: username,
-               password: password,
-               email: email,
-            });
-         const auth = {token: result.data.token};
-         dispatch({type: actions.REGISTER, payload: auth})
-         history.push('/');
-      }
-      catch(error) {
-          console.log(error);
-      }
+    const auth = await RegisterApiCalls.registerUser(username, password, email);
+    if (auth) {
+      console.log('About to send' + JSON.stringify(auth.token));
+         dispatch({type: actions.REGISTER, payload: auth.token})
+    }
+    else {
+      console.log("Couldn't register user... Cancelling");
+    }
+    history.push('/');
   };
 
   return (

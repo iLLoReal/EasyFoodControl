@@ -11,6 +11,7 @@ const Reducer = (state, action) => {
      case actions.LOGOUT:
        return {
          ...initialState,
+         recipes: action.payload
        }
      case actions.ADD_RECIPE:
        return {

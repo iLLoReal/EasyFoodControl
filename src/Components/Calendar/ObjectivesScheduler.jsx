@@ -2,7 +2,7 @@ import React, { useContext, useState } from 'react';
 import {useHistory} from 'react-router-dom';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css'
-import './Day.css';
+import './AddMeal.css';
 
 import Objectives from './Objectives';
 
@@ -176,27 +176,11 @@ const ObjectivesScheduler = () => {
 
   const Tiles = ({date, view}) => {
     const handleButtonClick = () => {
- 
-        switch(state.selectedDate?.stage) {
-            case 'none':
-                break;
-            case 'start':
-                dispatch({type: actions.SET_RANGE, payload: {...state.selectedDate, startingDate: date}})
-                break;
-            case 'end':
-                dispatch({type: actions.SET_RANGE, payload: {...state.selectedDate, stage: 'finished', endingDate: date}})
-                break;
-            case 'finished':
-                if (isInRange(date))
-                  getCalorieBalance(date);
-                break;
-            default:
-                break;
-        }
+      console.log(state.selectedDate.stage)
     }
 
     return (
-      <div onClick={handleButtonClick}>
+      <div /*onClick={handleButtonClick}*/>
         <br />
         {(state.selectedDate?.stage === 'finished' && isInRange(date)) ? 
         (<DisplayCalories gDate={date}/>) : 
@@ -205,9 +189,28 @@ const ObjectivesScheduler = () => {
       );
   }
 
+  const handleDayClick = (date) => {
+    switch (state.selectedDate?.stage) {
+      case 'none':
+        break;
+      case 'start':
+        dispatch({ type: actions.SET_RANGE, payload: { ...state.selectedDate, startingDate: date } })
+        break;
+      case 'end':
+        dispatch({ type: actions.SET_RANGE, payload: { ...state.selectedDate, stage: 'finished', endingDate: date } })
+        break;
+      case 'finished':
+        if (isInRange(date))
+          getCalorieBalance(date);
+        break;
+      default:
+        break;
+    }
+  }
+
   return (
     <div style={{margin: 'auto'}}>
-      <Calendar onClickDay={Tiles.handleButtonClick} tileContent={Tiles} tileClassName='toto' />
+      <Calendar onClickDay={handleDayClick} tileContent={Tiles} tileClassName='curTile' />
       <Objectives />
     </div>
   );

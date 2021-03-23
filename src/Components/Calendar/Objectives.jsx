@@ -1,14 +1,17 @@
 import React, { useState, useContext, useEffect } from 'react';
 
-import axios from 'axios';
+import ObjectivesApiCalls from '../Api/ObjectivesApiCalls';
+import { Context, initialState } from '../State/Provider/Store';
 
-import { Context } from '../State/Provider/Store';
-
-import {weekday, month} from './Day';
+import {weekday, month} from './AddMeal';
 import * as actions from '../State/Reducer/Reducer.constants';
 import { useHistory } from 'react-router-dom';
 
 export const isNum = (val) => (/^\d+$/.test(val));
+
+export const isTypeNumber = (val) => {
+  return (typeof(val) === "number");
+}
 
 const Objectives = () => {
   const objectivesInitialState = {
@@ -29,62 +32,47 @@ const Objectives = () => {
   const [measurements, setMeasurements] = useState(measurementsInitialState);
   const [activity, setActivity] = useState('Sedentary');
   const [gender, setGender] = useState('Male');
-  const setMeasurementsRoute = 'http://localhost:3000/user/setMeasurements';
-  const setObjectivesRoute = 'http://localhost:3000/user/setObjectives';
 
   useEffect(() => {
-    setObjectives({...state.objectives});
-    setMeasurements({...state.measurements});
-  },[state.objectives, state.measurements])
+    if (!isTypeNumber(state.objectives.weight) && !isTypeNumber(state.objectives.height)) {
+      console.log(`About to set objectives : ${JSON.stringify({...state.objectives})}`);
+      setObjectives({...state.objectives});
+      setMeasurements({...state.measurements});
+    }
+    if (state.selectedDate.startingDate === null &&
+      state.objectives.startingDate !== null &&
+      state.objectives.endingDate !== null) {
+        dispatch({type: actions.SET_RANGE, payload: {
+          ...state.selectedDate,
+          startingDate: new Date(state.objectives.startingDate),
+          endingDate: new Date(state.objectives.endingDate),
+          stage: 'finished'
+        }});
+    }
+  },[state.objectives, state.measurements, state.selectedDate, dispatch])
 
   const handleDispatchObjectives = async () => {
+    console.log(objectives);
     if (!objectives.calories || !isNum(objectives.calories)) {
+      console.log(objectives.calories);
       setObjectives({...objectives, calories: GetCalories('Oxford')})
     }
 
     if (!objectives.weight || !isNum(objectives.weight)) {
+      console.log('On est là');
       setObjectives({...objectives, weight: measurements.weight ? measurements.weight : 80})
     }
 
-    const sendObjectives = async () => { 
-      try {
-          await axios.post(
-          setObjectivesRoute,
-          {
-            token: state.auth.token,
-            objective: objectives
-          }
-        )
-          return true;
-     } catch(err) {
-        console.log(err);
-        return false;
-      }
-    }
-
-    const sendMeasurements = async () => { 
-      try {
-          await axios.post(
-          setMeasurementsRoute, 
-          {
-            token: state.auth.token,
-            measurements: measurements,
-          }
-        );
-          return true;
-      } catch(err) {
-        console.log(err);
-        return false;
-      }
-    }
-
-    const measurementsAxiosResult = await sendMeasurements();
-    if (measurementsAxiosResult) {
+    const measurementsResponse = await ObjectivesApiCalls.sendMeasurements(state.auth, measurements);
+    if (measurementsResponse) {
+      console.log(`about to dispatch measurements : ${JSON.stringify({...measurements})}`)
+      console.log(measurementsResponse);
       dispatch({type: actions.SET_MEASUREMENTS, payload: {...measurements}});
     }
 
-    const objectivesAxiosResult = await sendObjectives();
-    if (objectivesAxiosResult) {
+    const objectivesResponse = await ObjectivesApiCalls.sendObjectives(state.auth, objectives);
+    if (objectivesResponse) {
+      console.log(objectivesResponse);
       dispatch({type: actions.SET_OBJECTIVES, payload: {...objectives}});
     }
   };
@@ -142,7 +130,7 @@ const Objectives = () => {
   const handleSelectEndingDate = () => {
     dispatch({type: actions.SET_RANGE, payload: {...state.selectedDate, stage: 'end'}})
   };
-  
+
   const handleSelectDateAuto = () => {
     const newSelectedDate = {
       stage: 'finished',
@@ -161,40 +149,52 @@ const Objectives = () => {
     dispatch({type: actions.SET_RANGE, payload: {...newSelectedDate}});
   }
 
-  const handleConfirmDate = () => {
+  const handleConfirmDate = async () => {
     setObjectives({...objectives, startingDate: state.selectedDate.startingDate, endingDate: state.selectedDate.endingDate});
+    const measurementsResponse = await ObjectivesApiCalls.sendMeasurements(state.auth, measurements);
+    const objectivesResponse = await ObjectivesApiCalls.sendObjectives(state.auth, {...objectives, startingDate: state.selectedDate.startingDate, endingDate: state.selectedDate.endingDate});
+    if (measurementsResponse && objectivesResponse) {
+      console.log('Measurements and objectives added to DB');
+    }
   }
 
   const handleCalorieObjective = (e) => {
-    if (isNum(e.target.value))
+    if (isNum(e.target.value)) {
+      console.log(e.target.value);
       setObjectives({...objectives, calories: e.target.value})
-    else if (e.target.value === '')
+    }
+    else if (e.target.value === '') {
+      console.log('Les calories ne sont pas des nombres');
       setObjectives({...objectives, calories: GetCalories('Oxford')});
+    }
   };
 
   const handleWeightObjective = (e) => {
-    if (isNum(e.target.value))
+    if (isNum(e.target.value)) {
+      console.log(`handleWeightObjective: adding ${e.target.value}`)
       setObjectives({...objectives, weight: e.target.value});
-    else
+    }
+    else {
+      console.log('On a pas de chiffre ou vide');
       setObjectives({...objectives, weight: measurements?.weight ? measurements.weight : measurementsInitialState.calories});
+    }
   };
 
   const handleMeasurementsAge = (e) => {
+    console.log(`handleMeasurementsAge: adding ${(isNum(e.target.value) ? e.target.value : 30)} `)
     setMeasurements({...measurements, age: (isNum(e.target.value) ? e.target.value : 30)});
   };
   const handleMeasurementsHeight = (e) => {
+    console.log(`handleMeasurementsHeight: adding ${(isNum(e.target.value) ? e.target.value : 180)} `)
     setMeasurements({...measurements, height: (isNum(e.target.value) ? e.target.value : 180)});
   };
   const handleMeasurementsWeight = (e) => {
+    console.log(`handleMeasurementsWeight: adding ${(isNum(e.target.value) ? e.target.value : 80)} `)
     setMeasurements({...measurements, weight: isNum(e.target.value) ? e.target.value : 80});
   };
 
   return (
     <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
-      {state.objectives.startingDate && (
-      <div>
-        <button onClick={() => history.push('/ObjectivesChart')}>Consult objectives stats</button>
-      </div>)}
       <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
         <h4>Type in current measures</h4>
         <form style={{textAlign: 'right'}}>
@@ -232,14 +232,28 @@ const Objectives = () => {
         </form>
       </div>
       <h3>Setup your goals !</h3>
-      <h4>Select a date range</h4>
-          Click on Start then click on a day of the calendar, then repeat with End to choose an ending date
+       <span>Calories (leave blank for Oxford) :<input type='text' placeholder={objectives.calories} onChange={handleCalorieObjective}/></span><br/>
+       <span>Weight (leave blank for keeping current weight) :<input type='text' placeholder={objectives.weight} onChange={handleWeightObjective}/></span><br/>
+      <div style={{textAlign: 'left'}}>
+        <span>Recommended : </span><br/>
+      </div>
+      <div style={{textAlign: 'right'}}>
+        <span>Benedict and Harris:<b> {parseInt(GetCalories('Benedict'))}</b></span><br/>
+        <span>Oxford: <b>{parseInt(GetCalories('Oxford'))}</b></span>
+      </div>
+      <span>
+        <button onClick={handleDispatchObjectives}>Submit objectives</button>
+      </span>
+       {(state.objectives.weight && !isTypeNumber(state.objectives.weight)) && (
+        <div>
+         <h4>Select a date range</h4>
+           Click on Start then click on a day of the calendar, then repeat with End to choose an ending date<br/>
+          <span style={{textAlign: 'center'}}>(Or click on 'Choose for me')</span>
           <div style={{flex: 1, flexDirection: 'row'}}>
             <button onClick={handleSelectStartingDate}>Start</button>
             <button onClick={handleSelectEndingDate}>End</button>
             <button onClick={handleSelectDateAuto}>Choose for me</button>
-
-            {state.selectedDate.stage === 'finished' && <button onClick={handleConfirmDate}>Confirm</button>}
+             {state.selectedDate.stage === 'finished' ? <button onClick={handleConfirmDate}>Confirm</button> : null}
           </div>
           <div>
             <h3>
@@ -253,18 +267,8 @@ const Objectives = () => {
               ${state.selectedDate?.endingDate?.getDate()}`}
             </h3>
           </div>
-       <span>Calories (leave blank for Oxford) :<input type='text' placeholder={objectives.calories} onChange={handleCalorieObjective}/></span><br/>
-       <span>Weight (leave blank for keeping current weight) :<input type='text' placeholder={objectives.weight} onChange={handleWeightObjective}/></span><br/>
-      <div style={{textAlign: 'left'}}>
-        <span>Recommended : </span><br/>
-      </div>
-      <div style={{textAlign: 'right'}}>
-        <span>Benedict and Harris:<b> {parseInt(GetCalories('Benedict'))}</b></span><br/>
-        <span>Oxford: <b>{parseInt(GetCalories('Oxford'))}</b></span>
-      </div>
-      <span>
-        <button onClick={handleDispatchObjectives}>Submit objectives</button>
-      </span>
+        </div>
+        )}
     </div>
   )
 };

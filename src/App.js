@@ -5,10 +5,12 @@ import Home from './Components/Home';
 
 const App = () => {
   return (
+    <div>
     <Store>
-      <Home/>
+        <Home/>
     </Store>
-  );
+    </div>
+   );
 }
 
 export default App;

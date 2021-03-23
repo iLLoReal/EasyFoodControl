@@ -1,9 +1,12 @@
-import React, { useContext, useState } from 'react';
-import axios from 'axios';
+import React, { useContext, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { isNum } from './Calendar/Objectives';
 import { Context } from './State/Provider/Store';
-
+import RecipesApiCalls from './Api/RecipesApiCalls'
+import GeneralApiCalls from './Api/GeneralApiCalls';
+import LoginApiCalls from './Api/LoginApiCalls';
+import * as actions from './State/Reducer/Reducer.constants';
+import jwt_decode from 'jwt-decode';
 
 const styles = {
   container: {
@@ -73,7 +76,8 @@ const Recipe = () => {
   const generalInfoInitialState = {
     title: 'none',
     cookingMethod: 'None',
-    id: -1
+    id: -1,
+    user: {}
   };
 
   const ingredientListInitialState = [];
@@ -86,21 +90,82 @@ const Recipe = () => {
   const [ingredientList, setIngredientList] = useState(...ingredientListInitialState);
   const [nutriments, setNutriments] = useState({...nutrimentsInitialState});
   const [errorMessage, setErrorMessage] = useState('');
-  const recipesRoute = 'http://localhost:3000/recipes';
+  const [loading, setLoading] = useState('initial');
+  const [timer, setTimer ] = useState(false);
+  const [title, setTitle] = useState('Recipe');
   let history = useHistory();
 
+ 
+
+  useEffect(() => { 
+    const interval = setInterval(() => {
+      if (!timer) {
+        console.log('Setting timer to true');
+        setTimer(true);
+      }
+    }, 1000);
+    const getRecipes = async () => {
+       const recipesResponse = await LoginApiCalls.getRecipes();
+       if (recipesResponse) {
+         if (recipesResponse !== 'No recipes') {
+           console.log(`Notre reponse : ${JSON.stringify(recipesResponse)}`)
+            dispatch({type: actions.ADD_RECIPE, payload: [...recipesResponse]});
+            setLoading('');
+          }
+         else {
+           console.log('In here');
+           //dispatch({type: actions.ADD_RECIPE, payload: []});
+           setLoading('No recipes');
+         }
+       }
+       else {
+         console.log('in there');
+       }
+    }
+    if (!(state.recipes?.length) && (loading === 'initial' || loading === 'loading')) {
+
+      if (loading === 'initial') {
+        console.log(state.recipes);
+        setLoading('loading');
+      }
+      if (timer) {
+        console.log('About to trigger getRecipes');
+       getRecipes();
+       setTimer(false);
+      } else {
+
+      }
+    }
+    return function cleanup() {
+      if (interval)
+        clearInterval(interval);
+      setTimer(false);
+    }
+  }, [state, dispatch, timer, loading])
+
   const createRecipe = async (event) => {
-    let recipeId = state.recipes.length <= 0 ? 0 : state.recipes[state.recipes.length - 1].generalInformation.id + 1;
+    let recipeId = !state.recipes.length ? 0 : state.recipes[state.recipes.length - 1].generalInformation.id + 1;
     const recipe = [];
 
-    if (recipeId === -1) {
+    if (!generalInfo.title || generalInfo?.title === 'none') {
+      setErrorMessage("'Title can't be empty'");
       return;
     }
 
+    if (recipeId === -1 || !ingredientList.length) {
+      return;
+    }
+    let decodedToken = state.auth;
+    if (decodedToken.length) {
+      console.log(decodedToken);
+      decodedToken = jwt_decode(decodedToken);
+      console.log(decodedToken);
+    }
     recipe.push({
       generalInformation: {
         ...generalInfo,
-        id: recipeId
+        id: recipeId,
+        user: { login: decodedToken ? decodedToken.login : undefined, email: decodedToken ? decodedToken.email : undefined }
       },
       ingredients: [
         ...ingredientList
@@ -108,36 +173,68 @@ const Recipe = () => {
      }
     );
 
-    try {
-        await axios.post(recipesRoute, 
-        {
-           recipes: [...state.recipes, ...recipe]
-        })
-    } catch (err) {
-      console.log(err);
+    const newRecipes = [...state.recipes, ...recipe];
+    console.log('Ici on envoie ' + state.auth)
+    const added = await RecipesApiCalls.sendRecipes(newRecipes, undefined, state.auth);
+    if (added === null) {
+      console.log('Cancelling recipes add');
+      return;
     }
     dispatch({type: 'ADD_RECIPE', payload: [...state.recipes, ...recipe]});
-    if (state.auth.token)//Check from server if token is valid
-      dispatch({type: 'DISPLAY_ADD', payload: {displayDay: false, selectedDay: state.selectedDay.day}});
-    else {
-      setIngredientList([...ingredientListInitialState]);
-      history.push('/');
-    }
     setIngredientList([...ingredientListInitialState]);
+    if (state.auth.length) {
+      const isTokenValid = await GeneralApiCalls.verifyToken(state.auth);
+      if (isTokenValid) {
+        setLoading('initial');
+        dispatch({type: 'DISPLAY_ADD', payload: {displayDay: false, selectedDay: state.selectedDay.day}});
+      }
+    }
+    else {
+      setLoading('initial');
+      setTimer(false);
+      const timeout = setTimeout(() => {
+        history.push('/logout');
+        clearTimeout(timeout);
+      }, 1000)
+    }
+    setLoading('initial');
   }
 
-  const modifyRecipe = () => {
+  const modifyRecipe = async () => {
     let modified = [];
+    let fail = false;
     if (selectedRecipe) {
       modified = state.recipes.map(recipe => {
-        if (recipe.generalInformation.id === selectedRecipe.generalInformation.id)
-          recipe = {...selectedRecipe, ingredients: [...ingredientList]};
+        if (recipe.generalInformation.id === selectedRecipe.generalInformation.id) {
+          if (recipe.generalInformation.title === 'none') {
+              setErrorMessage("'Title' can't be empty");
+              fail = true;
+          }
+           recipe = {...selectedRecipe, ingredients: [...ingredientList]};
+        }
         return recipe;
       });
+    }    
+    if (fail) {
+      return;
     }
+/*    if (!ingredientList.length)
+      modified = modified.splice(modified.indexOf((recipe) => !recipe.ingredients.length));*/
     setIngredient(ingredientInitialState);
-    setNutriments(nutrimentsInitialState)
-    dispatch({type: 'ADD_RECIPE', payload: [...modified]});
+    setNutriments(nutrimentsInitialState);
+    const newRecipes = [...modified];
+    console.log('about to send');
+    console.log(newRecipes);
+
+    const added = await RecipesApiCalls.sendRecipes(newRecipes, selectedRecipe.generalInformation.id, state.auth);
+    if (added) {
+      dispatch({type: 'ADD_RECIPE', payload: [...newRecipes]});
+      setSelectedRecipe(null);
+    }
+    else {
+      console.log("Couldn't add recipe to server");
+      return;
+    }
   }
 
   const handleIngredientChange = (event, object, prop) => {
@@ -147,10 +244,12 @@ const Recipe = () => {
           object[prop] = ingredient[prop];
           if (errorMessage === '') {
             setErrorMessage(`'${prop}' needs to be a number`);
-            return;
           }
+          return;
         }
         else {
+          if (errorMessage !== '')
+            setErrorMessage('');
           object[prop] = parseInt(event.target.value);
           object[prop] = (isNaN(object[prop])) ? 0 : object[prop];
         }
@@ -164,9 +263,29 @@ const Recipe = () => {
   const handleNutrimentChange = (event, object, prop) => {
     if (event.target.value !== '') {
       let nutriment = event.target.value;
-      if (nutriment[nutriment.length] !== 'g') {
+      if (nutriment[nutriment.length - 1] !== 'g') {
+        if (!isNum(nutriment)) {
+          console.log('here');
+          if (errorMessage === '') {
+            setErrorMessage(`'${prop}' needs to be a number`);
+          }
+          return;
+        }
         nutriment += 'g';
+      } else {
+        let checkIfNumber = [...nutriment];
+        checkIfNumber.splice(checkIfNumber.length - 1, 1);
+        if (!isNum(checkIfNumber.join(''))) {
+          if (errorMessage === '') {
+            setErrorMessage(`'${prop}' needs to be a number`);
+          }
+          return;
+        } else {
+          console.log('It is a number, though...');
+        }
       }
+      if (errorMessage !== '')
+         setErrorMessage('');
       if (!isNaN(event.target.value)) {
         object[prop] = event.target.value;
       }
@@ -174,7 +293,7 @@ const Recipe = () => {
         object[prop] = nutriments[prop];
       setNutriments({...object});
       setIngredient({...ingredient, nutriments: {...object}});
-    }
+    } else { console.log('Empty value')}
   };
 
   const addIngredient = () => {
@@ -267,6 +386,8 @@ const Recipe = () => {
       }
       else if (e.target.value !== '') {
         setGeneralInfo({...generalInfo, title: e.target.value});
+      } else {
+        setErrorMessage("'title' can't be empty");
       }
     }
 
@@ -303,19 +424,29 @@ const Recipe = () => {
           <h4>Recipe name</h4>
           <input type="text" placeholder={selectedRecipe?.generalInformation.title} onChange={handleSetTitle}/>
         </label>
+        {loading.length ? 
+        (loading === 'No recipes' ? 
+          (<div>No Recipe</div>) : (loading === 'loading' ? (<div>{loading}</div>) : null)
+        ) : null}
+
         {state.recipes.length ? (
           <div>
             <span>Or select recipe</span>
             <select name="Select recipe" onChange={handleSetSelectedRecipe} selected={selectedRecipe?.generalInformation?.id}>
               <option key={0} value='none'>none</option>
-             {state.recipes.map((recipe, id) => {
+             {loading !== 'No recipes' && state.recipes.map((recipe, id) => {
+               if (recipe?.ingredients?.length) {
                  return (
                    <option key={recipe.toString() + id} value={recipe.generalInformation.id}>
                      {recipe.generalInformation.id}: {recipe.generalInformation.title}
                    </option>
                    )
-               })}
+                 }
+                return null;
+               }
+               )}
              </select>
+             <button onClick={() => { setLoading('initial'); setTimer(false); dispatch({type: actions.ADD_RECIPE, payload: []})}}>Check for new recipes</button>
            </div>
         ) : (null)}
         <h4>Cooking method</h4>
@@ -340,29 +471,32 @@ const Recipe = () => {
         <form style={styles.form} onSubmit={(event) => event.preventDefault}>
           {DisplayInput({...ingredient}, handleIngredientChange)}
           {DisplayInput({...nutriments}, handleNutrimentChange)}
+          <input type='reset' defaultValue='Reset'/>
         </form>
-        <button style={{display: 'block', margin: '0 auto 10px auto', width: '100%'}}
-        onClick={isIngredientInList(ingredient?.id) ?  modifyIngredient : addIngredient}>{isIngredientInList(ingredient?.id) ? `Change ${ingredient?.name}` : 'add'}</button>
+        {errorMessage === '' && 
+        (<button style={{display: 'block', margin: '0 auto 10px auto', width: '100%'}}
+        onClick={isIngredientInList(ingredient?.id) ?  modifyIngredient : addIngredient}>{isIngredientInList(ingredient?.id) ? `Change ${ingredient?.name}` : 'add'}</button>)}
       </div>
       {ingredientList && (
       <div>
-        {!selectedRecipe ? (
+        {errorMessage === '' &&
+        !selectedRecipe ? (
         <button style={styles.submitButton} onClick={createRecipe}>Create recipe</button>
-        ) : (
+        ) : errorMessage === '' ? (
         <div>
           <button style={styles.submitButton} onClick={modifyRecipe}>Modify recipe</button>
           <button style={styles.submitButton} onClick={cancelModifyRecipe}>Cancel</button>
         </div>
-        )}
-        {errorMessage !== '' && (
-          <span style={{border: '1px solid black', color: 'red'}}>
-            <button style={styles.deleteButton} onClick={() => setErrorMessage('')}>
-              X
-            </button>
-            {errorMessage}
-          </span>
-        )}
+        ) : null}
       </div>
+      )}
+      {errorMessage !== '' && (
+        <div style={{border: '1px solid black', color: 'red'}}>
+          <button style={styles.deleteButton} onClick={() => setErrorMessage('')}>
+            X
+          </button>
+          {errorMessage}
+         </div>
       )}
     </div>
   );

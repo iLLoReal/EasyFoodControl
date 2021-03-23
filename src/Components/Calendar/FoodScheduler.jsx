@@ -1,7 +1,7 @@
 import React, { useContext, useState } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css'
-import './Day.css';
+import './AddMeal.css';
 import { Context } from '../State/Provider/Store';
 import * as actions from '../State/Reducer/Reducer.constants'
 
@@ -14,8 +14,8 @@ const FoodSchedule = () => {
 
     const isInRange = (date) => {
       const curDate = date.getTime();
-      const from = state.selectedDate?.startingDate?.getTime();
-      const to = state.selectedDate?.endingDate?.getTime();
+      const from = state.selectedDate?.startingDate?.getTime() || state.objectives?.startingDate?.getTime();
+      const to = state.selectedDate?.endingDate?.getTime() || state.objectives?.endingDate?.getTime();
       return (curDate >= from && curDate <= to);
     }
 
@@ -34,8 +34,8 @@ const FoodSchedule = () => {
       }
     }
     return (
-      <div>
-        {calories}{isInRange(gDate.gDate) ? `/${state.objectives.calories}` : null}
+      <div style={!isInRange(gDate.gDate) ? {backgroundColor: ''} : {backgroundColor: 'lightGreen'}}>
+        {calories}{isInRange(gDate.gDate) ? `/${state.objectives.calories}` : null} calories
         {recipes}
       </div>
     );
