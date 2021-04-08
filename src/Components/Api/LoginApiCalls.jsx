@@ -16,7 +16,6 @@ const LoginApiCalls = {
     logout: async (token) => {
         const logoutResponse = await ApiMethods.getPostResultAlpha(routes.logoutRoute, { token: token }, null)
         if (logoutResponse.data) {
-            console.log('Sending data back');
             return logoutResponse.data;
         }
         else {
@@ -57,19 +56,14 @@ const LoginApiCalls = {
     getMealsData: async (token) => {
         const mealsResponse = await ApiMethods.getPostResultAlpha(routes.getMealsRoute, { token: token }, 
         (response) => {
-            console.log(`before for : ${JSON.stringify(response)}`);
             for (let i = 0; i < response.length; i++) {
-                console.log(`in meals, about to change in for loop`);
                 const buffer = response[i].day;
                 response[i].day = new Date(buffer);}
             });
         if (mealsResponse.data !== undefined) {
-            console.log('data in meals');
              return mealsResponse.data;
-    //         await dispatch({type: actions.ADD_MEAL, payload: [...result.data]});
         }
         else {
-            console.log(mealsResponse.data);
             console.log(ApiMethods.getErrorResponse(mealsResponse));
             return null;
         }
@@ -77,16 +71,13 @@ const LoginApiCalls = {
     getObjectives: async (token) => {
         const objectiveResponse = await ApiMethods.getPostResultAlpha(routes.getObjectivesRoute, { token: token }, 
         (response) => {
-            console.log(`in getObjectives.next : ${JSON.stringify(response)}`);
             const bufferStartingDate = response.startingDate;
             const bufferEndingDate = response.endingDate;
             response.startingDate = new Date(bufferStartingDate);
             response.endingDate = new Date(bufferEndingDate);
         });
         if (objectiveResponse.data !== undefined) {
-            console.log('data in objectives');
              return objectiveResponse.data;
-    //         await dispatch({type: actions.ADD_MEAL, payload: [...result.data]});
         }
         else {
             console.log(ApiMethods.getErrorResponse(objectiveResponse));
@@ -96,7 +87,6 @@ const LoginApiCalls = {
     getMeasurements: async (token) => {
         const measurementsResponse = await ApiMethods.getPostResultAlpha(routes.getMeasurementsRoute, { token: token }, null);
         if (measurementsResponse.data !== undefined) {
-            console.log('data in measurements');
              return measurementsResponse.data;
         }
         else {
@@ -107,7 +97,6 @@ const LoginApiCalls = {
     getRecipes: async () => {
         const recipesResponse = await ApiMethods.getPostResultAlpha(routes.getRecipesRoute, {}, null);
         if (recipesResponse.data !== undefined) {
-            console.log('data in Recipes');
              return recipesResponse.data;
         }
         else {

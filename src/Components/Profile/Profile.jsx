@@ -65,7 +65,6 @@ const Profile = () => {
 
     const result = await LoginApiCalls.changePassword(newUser);
     if (result) {
-      console.log(`Ici on a result ${JSON.stringify(result)}`);
       dispatch({ type: actions.LOGIN, payload: result.token });
     } else {
       console.log('Cancelling modify...');
@@ -85,7 +84,6 @@ const Profile = () => {
 
     const result = await LoginApiCalls.modifyUser(newUser);
     if (result) {
-      console.log(`Ici on a result ${JSON.stringify(result)}`);
       dispatch({ type: actions.LOGIN, payload: result.token });
     } else {
       console.log('Cancelling modify...');

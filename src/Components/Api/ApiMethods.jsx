@@ -8,13 +8,11 @@ const ApiMethods = {
         route,
         jsonObject
       );
-      console.log(response);
       if (next && response && response.status && response.status === 200) {
         next(response.data);
       }
       return response;
     } catch (err) {
-      console.log(err);
       return err;
     }
   },

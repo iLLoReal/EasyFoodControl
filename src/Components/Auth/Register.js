@@ -33,7 +33,6 @@ const Register = () => {
       return;
     const auth = await RegisterApiCalls.registerUser(username, password, email);
     if (auth) {
-      console.log('About to send' + JSON.stringify(auth.token));
          dispatch({type: actions.REGISTER, payload: auth.token})
     }
     else {

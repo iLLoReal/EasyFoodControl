@@ -175,10 +175,7 @@ const ObjectivesScheduler = () => {
   
 
   const Tiles = ({date, view}) => {
-    const handleButtonClick = () => {
-      console.log(state.selectedDate.stage)
-    }
-
+   
     return (
       <div /*onClick={handleButtonClick}*/>
         <br />

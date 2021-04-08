@@ -35,7 +35,6 @@ const Objectives = () => {
 
   useEffect(() => {
     if (!isTypeNumber(state.objectives.weight) && !isTypeNumber(state.objectives.height)) {
-      console.log(`About to set objectives : ${JSON.stringify({...state.objectives})}`);
       setObjectives({...state.objectives});
       setMeasurements({...state.measurements});
     }
@@ -52,27 +51,21 @@ const Objectives = () => {
   },[state.objectives, state.measurements, state.selectedDate, dispatch])
 
   const handleDispatchObjectives = async () => {
-    console.log(objectives);
     if (!objectives.calories || !isNum(objectives.calories)) {
-      console.log(objectives.calories);
       setObjectives({...objectives, calories: GetCalories('Oxford')})
     }
 
     if (!objectives.weight || !isNum(objectives.weight)) {
-      console.log('On est là');
       setObjectives({...objectives, weight: measurements.weight ? measurements.weight : 80})
     }
 
     const measurementsResponse = await ObjectivesApiCalls.sendMeasurements(state.auth, measurements);
     if (measurementsResponse) {
-      console.log(`about to dispatch measurements : ${JSON.stringify({...measurements})}`)
-      console.log(measurementsResponse);
       dispatch({type: actions.SET_MEASUREMENTS, payload: {...measurements}});
     }
 
     const objectivesResponse = await ObjectivesApiCalls.sendObjectives(state.auth, objectives);
     if (objectivesResponse) {
-      console.log(objectivesResponse);
       dispatch({type: actions.SET_OBJECTIVES, payload: {...objectives}});
     }
   };
@@ -160,22 +153,18 @@ const Objectives = () => {
 
   const handleCalorieObjective = (e) => {
     if (isNum(e.target.value)) {
-      console.log(e.target.value);
       setObjectives({...objectives, calories: e.target.value})
     }
     else if (e.target.value === '') {
-      console.log('Les calories ne sont pas des nombres');
       setObjectives({...objectives, calories: GetCalories('Oxford')});
     }
   };
 
   const handleWeightObjective = (e) => {
     if (isNum(e.target.value)) {
-      console.log(`handleWeightObjective: adding ${e.target.value}`)
       setObjectives({...objectives, weight: e.target.value});
     }
     else {
-      console.log('On a pas de chiffre ou vide');
       setObjectives({...objectives, weight: measurements?.weight ? measurements.weight : measurementsInitialState.calories});
     }
   };

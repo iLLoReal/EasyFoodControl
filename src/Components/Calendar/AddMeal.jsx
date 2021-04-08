@@ -41,8 +41,6 @@ const AddMeal = () => {
   const [displayRecipe, setDisplayRecipe] = useState(false);
   let firstMealOfTheDay = 0;
 
-  console.log('Rerender');
-
   useEffect(() => {
     let noMeals = true;
     if (state.meals.length) {

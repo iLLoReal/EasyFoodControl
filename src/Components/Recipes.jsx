@@ -210,7 +210,6 @@ const Recipe = () => {
     setIngredient(ingredientInitialState);
     setNutriments(nutrimentsInitialState);
     const newRecipes = [...modified];
-    console.log(newRecipes);
 
     const added = await RecipesApiCalls.sendRecipes(newRecipes, selectedRecipe.generalInformation.id, state.auth);
     if (added) {
@@ -250,7 +249,6 @@ const Recipe = () => {
       let nutriment = event.target.value;
       if (nutriment[nutriment.length - 1] !== 'g') {
         if (!isNum(nutriment)) {
-          console.log('here');
           if (errorMessage === '') {
             setErrorMessage(`'${prop}' needs to be a number`);
           }
@@ -265,8 +263,6 @@ const Recipe = () => {
             setErrorMessage(`'${prop}' needs to be a number`);
           }
           return;
-        } else {
-          console.log('It is a number, though...');
         }
       }
       if (errorMessage !== '')
@@ -278,7 +274,7 @@ const Recipe = () => {
         object[prop] = nutriments[prop];
       setNutriments({...object});
       setIngredient({...ingredient, nutriments: {...object}});
-    } else { console.log('Empty value')}
+    }
   };
 
   const addIngredient = () => {

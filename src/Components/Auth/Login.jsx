@@ -25,8 +25,6 @@ const Login = () => {
       if (meals === null || objectives === null || measurements === null || recipes === null) {
          return  false;
       }
-      console.log('Dispatching...');
-      console.log(meals);
       dispatch({type: actions.ADD_MEAL, payload: [...meals]});
       dispatch({type: actions.SET_OBJECTIVES, payload: {...objectives}});
       dispatch({type: actions.SET_MEASUREMENTS, payload: {...measurements}});
