@@ -3,23 +3,31 @@ import ApiMethods from './ApiMethods';
 
 const ObjectivesApiCalls = {
   sendObjectives: async (token, objective) => {
-    const objectivesResponse = await ApiMethods.getPostResultAlpha(routes.setObjectivesRoute, { token: token, objective: objective }, null);
+    const data = {
+      token: token,
+      objective: objective
+    };
+
+    const objectivesResponse = await ApiMethods.getPostResultAlpha(routes.setObjectivesRoute, data, null);
     if (objectivesResponse.data !== undefined) {
       return objectivesResponse.data;
     }
-    else {
-      console.log(ApiMethods.getErrorResponse(objectivesResponse));
-      return null;
-    }
+    console.log(ApiMethods.getErrorResponse(objectivesResponse));
+    return null;
   },
+
   sendMeasurements: async (token, measurements) => {
-    const measurementsResponse = await ApiMethods.getPostResultAlpha(routes.setMeasurementsRoute, { token: token, measurements: measurements }, null);
+    const data = {
+      token: token,
+      measurements: measurements
+    };
+
+    const measurementsResponse = await ApiMethods.getPostResultAlpha(routes.setMeasurementsRoute, data, null);
     if (measurementsResponse.data !== undefined) {
       return measurementsResponse.data;
-    } else {
-      console.log(ApiMethods.getErrorResponse(measurementsResponse));
-      return null;
-    }
+    } 
+    console.log(ApiMethods.getErrorResponse(measurementsResponse));
+    return null;
   }
 }
 export default ObjectivesApiCalls;
