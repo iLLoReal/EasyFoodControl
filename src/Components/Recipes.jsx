@@ -100,7 +100,6 @@ const Recipe = () => {
   useEffect(() => { 
     const interval = setInterval(() => {
       if (!timer) {
-        console.log('Setting timer to true');
         setTimer(true);
       }
     }, 1000);
@@ -108,28 +107,20 @@ const Recipe = () => {
        const recipesResponse = await LoginApiCalls.getRecipes();
        if (recipesResponse) {
          if (recipesResponse !== 'No recipes') {
-           console.log(`Notre reponse : ${JSON.stringify(recipesResponse)}`)
             dispatch({type: actions.ADD_RECIPE, payload: [...recipesResponse]});
             setLoading('');
           }
          else {
-           console.log('In here');
-           //dispatch({type: actions.ADD_RECIPE, payload: []});
            setLoading('No recipes');
          }
-       }
-       else {
-         console.log('in there');
        }
     }
     if (!(state.recipes?.length) && (loading === 'initial' || loading === 'loading')) {
 
       if (loading === 'initial') {
-        console.log(state.recipes);
         setLoading('loading');
       }
       if (timer) {
-        console.log('About to trigger getRecipes');
        getRecipes();
        setTimer(false);
       } else {
@@ -157,9 +148,7 @@ const Recipe = () => {
     }
     let decodedToken = state.auth;
     if (decodedToken.length) {
-      console.log(decodedToken);
       decodedToken = jwt_decode(decodedToken);
-      console.log(decodedToken);
     }
     recipe.push({
       generalInformation: {
@@ -174,10 +163,8 @@ const Recipe = () => {
     );
 
     const newRecipes = [...state.recipes, ...recipe];
-    console.log('Ici on envoie ' + state.auth)
     const added = await RecipesApiCalls.sendRecipes(newRecipes, undefined, state.auth);
     if (added === null) {
-      console.log('Cancelling recipes add');
       return;
     }
     dispatch({type: 'ADD_RECIPE', payload: [...state.recipes, ...recipe]});
@@ -223,7 +210,6 @@ const Recipe = () => {
     setIngredient(ingredientInitialState);
     setNutriments(nutrimentsInitialState);
     const newRecipes = [...modified];
-    console.log('about to send');
     console.log(newRecipes);
 
     const added = await RecipesApiCalls.sendRecipes(newRecipes, selectedRecipe.generalInformation.id, state.auth);
@@ -232,7 +218,6 @@ const Recipe = () => {
       setSelectedRecipe(null);
     }
     else {
-      console.log("Couldn't add recipe to server");
       return;
     }
   }

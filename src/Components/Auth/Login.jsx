@@ -17,36 +17,31 @@ const Login = () => {
 
    let history = useHistory();
 
+   const initialization = async (token) => {
+      const meals = await LoginApiCalls.getMealsData(token);
+      const objectives = await LoginApiCalls.getObjectives(token);
+      const measurements = await LoginApiCalls.getMeasurements(token);
+      const recipes = await LoginApiCalls.getRecipes();
+      if (meals === null || objectives === null || measurements === null || recipes === null) {
+         return  false;
+      }
+      console.log('Dispatching...');
+      console.log(meals);
+      dispatch({type: actions.ADD_MEAL, payload: [...meals]});
+      dispatch({type: actions.SET_OBJECTIVES, payload: {...objectives}});
+      dispatch({type: actions.SET_MEASUREMENTS, payload: {...measurements}});
+      dispatch({type: actions.LOGIN, payload: token});
+      return true;
+   }
+
    const handleLogin = async () => {
-     console.log('The madness begins !');
       const token = await LoginApiCalls.getLoginToken(username, password, email);
       if (token) {
-        console.log('We have that damn token');
-        console.log(token);
-        const meals = await LoginApiCalls.getMealsData(token);
-        console.log('we right here');
-        const objectives = await LoginApiCalls.getObjectives(token);
-        const measurements = await LoginApiCalls.getMeasurements(token);
-        const recipes = await LoginApiCalls.getRecipes();
-        console.log('We are after awaits');
-        if (meals === null || objectives === null || measurements === null || recipes === null) {
-          console.log('There was an error, cancelling connection');
-          console.log(`${meals}`);
-          console.log(`${objectives}`);
-          console.log(`${measurements}`);
-          console.log(`${recipes}`);
-          history.push('/');
-          return;
-        }
-        console.log('Dispatching...');
-        console.log(meals);
-        dispatch({type: actions.ADD_MEAL, payload: [...meals]});
-        dispatch({type: actions.SET_OBJECTIVES, payload: {...objectives}});
-        dispatch({type: actions.SET_MEASUREMENTS, payload: {...measurements}});
-        //dispatch({type: actions.ADD_RECIPE, payload: [...recipes]});
-        //dipsatch dates ? depuis objective ?
-        //handleSelectDateAuto(objectives, measurements); : IL FAUT FIX CA
-        dispatch({type: actions.LOGIN, payload: token});
+         if (!initialization(token)) {
+            console.log('Initialization error, cancelling connection');
+            history.push('/');
+            return;
+         }
         history.push('/AddMeal');
       } else {
         console.log("user not found !");
