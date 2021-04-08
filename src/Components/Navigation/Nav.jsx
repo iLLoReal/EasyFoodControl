@@ -33,9 +33,6 @@ const Nav = () => {
      useEffect(() => {
          setRouteChanged(prevBgType !== bgType);
          setPrevBgType(bgType);
-         if (state.auth.length) {
-           console.log('Ici auth' + state.auth);
-         }
       }, [location.pathname, bgType, prevBgType, state]);
 
 
