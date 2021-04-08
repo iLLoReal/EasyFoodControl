@@ -159,10 +159,27 @@ const AddMeal = () => {
   }
 
   const CreateRecipe = () => {
+    const DisplayCreateRecipe = (style) => {
+      return (
+        <span style={style}>
+          Create recipe or Check database
+        </span>
+      );
+    };
+    const DisplayCancelCreateRecipe = (style) => {
+      return (
+        <span style={style}>
+          Cancel
+        </span>
+      );
+    };
+    
     return (
     <div>
       <button style={styles.button} onClick={() => setDisplayCreateRecipe(!displayCreateRecipe)}>
-        {!displayCreateRecipe === true ? 'Create recipe/Check database' : 'Stop creating recipe'}
+        {!displayCreateRecipe === true ? 
+        <DisplayCreateRecipe /> :
+        <DisplayCancelCreateRecipe />}
       </button>
     </div>
     );
@@ -201,7 +218,9 @@ const AddMeal = () => {
       <div style={{width: '100%'}}>
         <button onClick={handleAddRecipe}>ADD RECIPE</button>
       </div>
-    ) : state.recipes.length ? <span>Select a recipe to add</span> : <span>Check database for recipes</span>
+    ) : state.recipes.length ? 
+    <span>Select a recipe to add</span> :
+    <span>Check database for recipes</span>
   };
 
   const handleSetDisplayRecipe = () => {
@@ -211,9 +230,11 @@ const AddMeal = () => {
   const DisplayIngredients = () => {
     return recipeList.length ? (
       <div style={{float: 'right'}}>
-        <button onClick={handleSetDisplayRecipe}>{!displayRecipe ? 'Display ingredients' : 'Hide ingredients'}</button>
+        <button onClick={handleSetDisplayRecipe}>
+          {!displayRecipe ? 'Display ingredients' : 'Hide ingredients'}
+        </button>
       </div>
-    ):null;
+    ) : null;
   }
 
   const getFirstMealOfTheDay = () => {
