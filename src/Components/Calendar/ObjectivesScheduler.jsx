@@ -177,7 +177,7 @@ const ObjectivesScheduler = () => {
   const Tiles = ({date, view}) => {
    
     return (
-      <div /*onClick={handleButtonClick}*/>
+      <div>
         <br />
         {(state.selectedDate?.stage === 'finished' && isInRange(date)) ? 
         (<DisplayCalories gDate={date}/>) : 

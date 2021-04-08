@@ -39,7 +39,6 @@ const AddMeal = () => {
   const [recipeList, setRecipeList] = useState([]);
   const [selectCookingMethod, setSelectCookingMethod] = useState('');
   const [displayRecipe, setDisplayRecipe] = useState(false);
-  let firstMealOfTheDay = 0;
 
   useEffect(() => {
     let noMeals = true;
@@ -47,8 +46,6 @@ const AddMeal = () => {
       for (let i = 0; i < state.meals.length; i++) {
         if (state.meals[i].day.toString() === state.selectedDay.day.toString()) {
           setRecipeList([...state.meals[i].recipes]);
-          if (noMeals)
-            firstMealOfTheDay = i;
           noMeals = false;
         }
       }
@@ -125,7 +122,11 @@ const AddMeal = () => {
       <div>
         <div>
           <span>Select Cooking Method </span>
-          <select name="cooking methods" selected={selectedRecipe?.generalInformation?.cookingMethod || selectCookingMethod} onChange={handleSetSelectCookingMethod}>
+          <select
+            name="cooking methods"
+            selected={selectedRecipe?.generalInformation?.cookingMethod || selectCookingMethod}
+            onChange={handleSetSelectCookingMethod}
+          >
             <option value="None">None</option>
             <option value="Oven">Oven</option>
             <option value="Microwave">Microwave</option>
@@ -133,17 +134,25 @@ const AddMeal = () => {
             <option value="Pan">Pan cooking</option>
           </select>
         </div>
-        <span>Select recipe </span>
-         <select style={styles.select} name="Select recipe" onChange={handleSetSelectedRecipe}>
-           <option key={0} value='None'>None</option>
+        <span>
+          Select recipe
+        </span>
+        <select 
+          name="Select recipe"
+          style={styles.select}
+          onChange={handleSetSelectedRecipe}
+        >
+          <option key={0} value='None'>None</option>
           {state.recipes ?
-            state.recipes.filter(recipe => recipe.generalInformation.cookingMethod === selectCookingMethod).map((recipe, id) => {
-              return (
-                <option key={id + 1} value={recipe.generalInformation.id}>
-                  {recipe.generalInformation.id}: {recipe.generalInformation.title}
-                </option>
+            state.recipes.filter(recipe => 
+              recipe.generalInformation.cookingMethod === selectCookingMethod)
+              .map((recipe, id) => {
+                return (
+                  <option key={id + 1} value={recipe.generalInformation.id}>
+                    {recipe.generalInformation.id}: {recipe.generalInformation.title}
+                  </option>
                 )
-            }) : <option value={'empty'}>No recipe</option>}
+              }) : <option value={'empty'}>No recipe</option>}
           </select>
       </div>
     ) : null;

@@ -3,14 +3,13 @@ import React, {
     useContext
    } from 'react';
 
-
 import { useHistory } from 'react-router-dom';
 import { Context } from '../State/Provider/Store';
 import LoginApiCalls  from '../Api/LoginApiCalls';
 import * as actions from '../State/Reducer/Reducer.constants';
 
 const Login = () => {
-   const [state, dispatch] = useContext(Context);
+   const [, dispatch] = useContext(Context);
    const [password, setPassword] = useState('');
    const [username, setUsername] = useState('');
    const [email, setEmail]= useState('');
@@ -41,9 +40,9 @@ const Login = () => {
             return;
          }
         history.push('/AddMeal');
-      } else {
-        console.log("user not found !");
+        return;
       }
+      console.log("user not found !");
    };
 
    const handlePassword = (e) => {

@@ -5,7 +5,7 @@ import { Context } from '../State/Provider/Store';
 import { month, weekday } from './AddMeal';
 
 const ObjectivesChart = () => {
-  const [state, dispatch] = useContext(Context);
+  const [state, ] = useContext(Context);
   const [caloriesData, setCaloriesData] = useState()
   const [nutrimentsData, setNutrimentsData] = useState()
   const [primaryCursorValue, setPrimaryCursorValue] = useState();
@@ -47,10 +47,6 @@ const ObjectivesChart = () => {
     const handleSetNutriments = () => {
       console.log(state.result['balanceJourney']);
       let newData = [...state.result['balanceJourney']];
-/*      let dataLipids = newData.map((result) => [result.date.getDate().toString(), result['lipids']]);
-      let dataCarbs = newData.map((result) => [result.date.getDate().toString(), result['carbs']]);
-      let dataProteins = newData.map((result) => [result.date.getDate().toString(), result['proteins']]);
-*/
       
       let dataLipids = newData.map((result) => [`${month[result.date.getMonth()]}, ${result.date.getDate()} (${weekday[result.date.getDay()]})`, result['lipids'] ? result['lipids'] : 1]);
       let dataCarbs = newData.map((result) => [`${month[result.date.getMonth()]}, ${result.date.getDate()} (${weekday[result.date.getDay()]})`, result['carbs'] ? result['carbs'] : 1]);

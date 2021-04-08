@@ -5,7 +5,6 @@ import { Context, initialState } from '../State/Provider/Store';
 
 import {weekday, month} from './AddMeal';
 import * as actions from '../State/Reducer/Reducer.constants';
-import { useHistory } from 'react-router-dom';
 
 export const isNum = (val) => (/^\d+$/.test(val));
 
@@ -28,7 +27,6 @@ const Objectives = () => {
 
   const [state, dispatch] = useContext(Context);
   const [objectives, setObjectives] = useState(objectivesInitialState);
-  const history = useHistory();
   const [measurements, setMeasurements] = useState(measurementsInitialState);
   const [activity, setActivity] = useState('Sedentary');
   const [gender, setGender] = useState('Male');

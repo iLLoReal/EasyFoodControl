@@ -10,7 +10,7 @@ import * as actions from '../State/Reducer/Reducer.constants'
 const FoodSchedule = () => {
   const [state, dispatch] = useContext(Context);
   const [display, setDisplay] = useState(false);
-  const [selectedDay, setSelectedDay] = useState({display: false, day: 'none'})
+  const [, setSelectedDay] = useState({display: false, day: 'none'})
 
     const isInRange = (date) => {
       const curDate = date.getTime();
@@ -27,10 +27,16 @@ const FoodSchedule = () => {
       if (state.meals[mealsIndex].day.toString() === gDate.gDate.toString()) {
         for (let recipesIndex = 0; recipesIndex < state.meals[mealsIndex].recipes.length; recipesIndex++) {
           for (let ingredsIndex = 0; ingredsIndex < state.meals[mealsIndex].recipes[recipesIndex].ingredients.length; ingredsIndex++) {
-              calories += parseInt(state.meals[mealsIndex].recipes[recipesIndex].ingredients[ingredsIndex].calorie, 10);
+              calories += parseInt(
+                state.meals[mealsIndex]
+                .recipes[recipesIndex]
+                .ingredients[ingredsIndex]
+                .calorie,
+                10);
           }
         }
-        recipes = state.meals[mealsIndex].recipes.map((recipe, id) => <li key={id}>{`${recipe.generalInformation.title}`}</li>);
+        recipes = state.meals[mealsIndex].recipes.map((recipe, id) =>
+          <li key={id}>{`${recipe.generalInformation.title}`}</li>);
       }
     }
     return (
@@ -40,7 +46,6 @@ const FoodSchedule = () => {
       </div>
     );
   };
-  
 
   const Scheduler = ({date, view}) => {
     const handleButtonClick = () => {
