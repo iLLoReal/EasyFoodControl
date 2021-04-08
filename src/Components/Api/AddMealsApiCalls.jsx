@@ -3,7 +3,9 @@ import * as routes from '../Routes';
 
 const AddMealsApiCalls = {
     sendMeals: async (token, meals) => {
-        const addMealsResponse = await ApiMethods.getPostResultAlpha(routes.addMealRoute, {token: token, meals: meals}, null);
+        const data = {token: token, meals: meals};
+
+        const addMealsResponse = await ApiMethods.getPostResultAlpha(routes.addMealRoute, data, null);
         if (addMealsResponse.status === 201) {
             return true;
         } else if (addMealsResponse.status === 403) {

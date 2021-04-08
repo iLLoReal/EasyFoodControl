@@ -8,7 +8,7 @@ const ApiMethods = {
         route,
         jsonObject
       );
-      if (next && response && response.status && response.status === 200) {
+      if (next && response?.status === 200) {
         next(response.data);
       }
       return response;
@@ -17,17 +17,13 @@ const ApiMethods = {
     }
   },
 
-  getErrorResponse: (errorResponse) => {
-    if (errorResponse.response) {
-      return errorResponse.response;
-    } else if (errorResponse.request) {
-      return errorResponse.request;
-    } else if (errorResponse.message) {
-      return errorResponse.message;
-    } else {
-      return 'invalid response object';
-    }
-  }
+  getErrorResponse: (errorResponse) => (
+    errorResponse.response ||
+    errorResponse.request ||
+    errorResponse.message ||
+    'invalid response object'
+  )
+
 }
 
 export default ApiMethods;
