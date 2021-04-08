@@ -9,7 +9,7 @@ const ObjectivesApiCalls = {
     };
 
     const objectivesResponse = await ApiMethods.getPostResultAlpha(routes.setObjectivesRoute, data, null);
-    if (objectivesResponse.data !== undefined) {
+    if (objectivesResponse?.data !== undefined) {
       return objectivesResponse.data;
     }
     console.log(ApiMethods.getErrorResponse(objectivesResponse));
@@ -23,7 +23,7 @@ const ObjectivesApiCalls = {
     };
 
     const measurementsResponse = await ApiMethods.getPostResultAlpha(routes.setMeasurementsRoute, data, null);
-    if (measurementsResponse.data !== undefined) {
+    if (measurementsResponse?.data !== undefined) {
       return measurementsResponse.data;
     } 
     console.log(ApiMethods.getErrorResponse(measurementsResponse));

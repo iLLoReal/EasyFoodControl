@@ -10,16 +10,17 @@ const LoginApiCalls = {
     };
 
     const authResponse = await ApiMethods.getPostResultAlpha(routes.loginRoute, data, null)
-    if (authResponse.data) {
+    if (authResponse?.data) {
       const token = authResponse.data.token;
       return token;
     }
     console.log(ApiMethods.getErrorResponse(authResponse));
     return null;
   },
+
   logout: async (token) => {
     const logoutResponse = await ApiMethods.getPostResultAlpha(routes.logoutRoute, { token: token }, null)
-    if (logoutResponse.data) {
+    if (logoutResponse?.data) {
       return logoutResponse.data;
     }
     console.log(ApiMethods.getErrorResponse(logoutResponse));
@@ -39,7 +40,7 @@ const LoginApiCalls = {
     };
 
     const modifyUserResponse = await ApiMethods.getPostResultAlpha(routes.modifyUserRoute, data);
-    if (modifyUserResponse.data) {
+    if (modifyUserResponse?.data) {
       return modifyUserResponse.data;
     }
     console.log(ApiMethods.getErrorResponse(modifyUserResponse));
@@ -61,7 +62,7 @@ const LoginApiCalls = {
     };
 
     const changePasswordResponse = await ApiMethods.getPostResultAlpha(routes.changePasswordRoute, data);
-    if (changePasswordResponse.data) {
+    if (changePasswordResponse?.data) {
       return changePasswordResponse.data;
     } 
     console.log(ApiMethods.getErrorResponse(changePasswordResponse));
@@ -76,7 +77,7 @@ const LoginApiCalls = {
       }
     }
     const mealsResponse = await ApiMethods.getPostResultAlpha(routes.getMealsRoute, { token: token }, jsonToDate);
-    if (mealsResponse.data !== undefined) {
+    if (mealsResponse?.data !== undefined) {
       return mealsResponse.data;
     }
     console.log(ApiMethods.getErrorResponse(mealsResponse));
@@ -91,7 +92,7 @@ const LoginApiCalls = {
       response.endingDate = new Date(bufferEndingDate);
     }
     const objectiveResponse = await ApiMethods.getPostResultAlpha(routes.getObjectivesRoute, { token: token }, jsonToDate);
-    if (objectiveResponse.data !== undefined) {
+    if (objectiveResponse?.data !== undefined) {
       return objectiveResponse.data;
     }
     console.log(ApiMethods.getErrorResponse(objectiveResponse));
@@ -100,7 +101,7 @@ const LoginApiCalls = {
 
   getMeasurements: async (token) => {
     const measurementsResponse = await ApiMethods.getPostResultAlpha(routes.getMeasurementsRoute, { token: token }, null);
-    if (measurementsResponse.data !== undefined) {
+    if (measurementsResponse?.data !== undefined) {
       return measurementsResponse.data;
     }
     console.log(ApiMethods.getErrorResponse(measurementsResponse));
@@ -109,7 +110,7 @@ const LoginApiCalls = {
 
   getRecipes: async () => {
     const recipesResponse = await ApiMethods.getPostResultAlpha(routes.getRecipesRoute, {}, null);
-    if (recipesResponse.data !== undefined) {
+    if (recipesResponse?.data !== undefined) {
       return recipesResponse.data;
     }
     console.log(ApiMethods.getErrorResponse(recipesResponse));
